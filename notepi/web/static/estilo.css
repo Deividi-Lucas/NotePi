@@ -52,7 +52,7 @@ input, select, textarea {
   width: 100%; padding: 10px 12px; border: 1px solid var(--borda); border-radius: 8px;
   background: var(--superficie);
 }
-textarea { min-height: 45vh; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 15px; }
+textarea { min-height: 45vh; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 16px; }
 label { display: block; margin-bottom: 14px; font-weight: 600; }
 label > input, label > select, label > textarea { margin-top: 4px; font-weight: 400; }
 
@@ -93,6 +93,7 @@ mark { background: var(--marca); color: inherit; padding: 0 2px; border-radius: 
 .chip.versiculo { background: var(--versiculo); }
 
 .aviso { padding: 10px 12px; border-left: 4px solid var(--destaque); background: var(--superficie); }
+.aviso.erro { border-left-color: var(--perigo); }
 .previa { margin: -6px 0 14px; }
 
 .markdown table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }

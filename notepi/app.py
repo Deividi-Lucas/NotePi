@@ -20,6 +20,19 @@ def criar_app(config: Config | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=ESTATICOS), name="static")
     app.include_router(rotas.router)
 
+    @app.middleware("http")
+    async def protecao(request: Request, call_next):
+        origem = request.headers.get("sec-fetch-site")
+        if request.method == "POST" and origem is not None and origem not in ("same-origin", "none"):
+            resposta = templates.TemplateResponse(
+                request, "erro.html", {"mensagem": "Pedido bloqueado: veio de outro site."}, status_code=403
+            )
+        else:
+            resposta = await call_next(request)
+        resposta.headers["X-Frame-Options"] = "DENY"
+        resposta.headers["X-Content-Type-Options"] = "nosniff"
+        return resposta
+
     @app.exception_handler(Exception)
     async def erro_inesperado(request: Request, exc: Exception):
         log.exception("erro inesperado em %s %s", request.method, request.url.path)

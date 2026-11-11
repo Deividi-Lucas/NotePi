@@ -7,8 +7,14 @@
     <span class="meta">{% if banco_ok %}Banco OK{% else %}PROBLEMA: verificação de integridade falhou{% endif %}</span></div></li>
   <li><div><strong>Notas</strong><span class="meta">{{ total_notas }} ativa(s)</span></div></li>
   <li><div><strong>Último backup</strong>
-    <span class="meta">{{ ultimo_backup or "nenhum backup encontrado" }}</span></div></li>
+    <span class="meta">{% if ultimo_backup %}{{ ultimo_backup }} ({% if dias_backup == 0 %}hoje{% else %}há {{ dias_backup }} dia(s){% endif %}){% else %}nenhum backup encontrado{% endif %}</span></div></li>
   <li><div><strong>Espaço livre</strong><span class="meta">{{ "%.1f" | format(livre_gb) }} GB</span></div></li>
 </ul>
+{% if dias_backup is none or dias_backup > 1 %}
+<p class="aviso erro">Atenção: o backup está atrasado. Verifique o pendrive e o serviço notepi-manutencao.</p>
+{% endif %}
+{% if pendrive_ausente %}
+<p class="aviso erro">Pendrive de backup não está montado em {{ backup_dir }}.</p>
+{% endif %}
 <p><a class="botao" href="/exportar">Exportar tudo em Markdown (.zip)</a></p>
 {% endblock %}

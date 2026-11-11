@@ -1,7 +1,7 @@
 import io
 import re
 import zipfile
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -213,4 +213,62 @@ def test_script_de_rascunho(cliente):
     assert "editada_em_base" in r.text
     assert "15000" in r.text
     assert "409" in r.text
+    assert "Descartar rascunho" in r.text
+    assert "redirected" in r.text
     assert "enviando" in r.text
+
+
+def test_chave_de_rascunho_depende_do_modelo(cliente):
+    assert 'data-chave-rascunho="nova-culto"' in cliente.get("/notas/nova?modelo=culto").text
+    assert 'data-chave-rascunho="nova-livre"' in cliente.get("/notas/nova").text
+
+
+def test_post_de_outro_site_e_bloqueado(cliente):
+    r = cliente.post("/notas", data={"titulo": "x"}, headers={"Sec-Fetch-Site": "cross-site"},
+                     follow_redirects=False)
+    assert r.status_code == 403
+    assert "Pedido bloqueado: veio de outro site." in r.text
+    assert "Nenhuma nota" in cliente.get("/").text
+
+
+def test_post_do_mesmo_site_ou_sem_cabecalho_passa(cliente):
+    r = cliente.post("/notas", data={"titulo": "x"}, headers={"Sec-Fetch-Site": "same-origin"},
+                     follow_redirects=False)
+    assert r.status_code == 303
+    r = cliente.post("/notas", data={"titulo": "y"}, follow_redirects=False)
+    assert r.status_code == 303
+
+
+def test_cabecalhos_de_seguranca(cliente):
+    r = cliente.get("/")
+    assert r.headers["x-frame-options"] == "DENY"
+    assert r.headers["x-content-type-options"] == "nosniff"
+
+
+def _saude_com_backup(tmp_path, dias=None, **cfg):
+    bk = tmp_path / "bk"
+    bk.mkdir()
+    if dias is not None:
+        (bk / f"notas-{(date.today() - timedelta(days=dias)).isoformat()}.db").write_bytes(b"")
+    config = Config(db=tmp_path / "notas.db", backup_dir=bk, **cfg)
+    with TestClient(criar_app(config), raise_server_exceptions=False) as c:
+        return c.get("/saude")
+
+
+def test_saude_backup_de_hoje(tmp_path):
+    r = _saude_com_backup(tmp_path, 0)
+    assert r.status_code == 200 and "hoje" in r.text and "atrasado" not in r.text
+
+
+def test_saude_backup_antigo_avisa(tmp_path):
+    r = _saude_com_backup(tmp_path, 5)
+    assert "há 5 dia(s)" in r.text and "atrasado" in r.text
+
+
+def test_saude_sem_backup_avisa(tmp_path):
+    assert "atrasado" in _saude_com_backup(tmp_path).text
+
+
+def test_saude_pendrive_ausente_avisa(tmp_path):
+    r = _saude_com_backup(tmp_path, 0, backup_exigir_montagem=True)
+    assert "não está montado" in r.text

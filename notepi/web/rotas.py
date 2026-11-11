@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import sqlite3
 from datetime import date
@@ -80,7 +81,7 @@ def nova(request: Request, modelo: str | None = None, area: str | None = None):
         modelo=modelo,
         tags_texto="",
         editada_em_base="",
-        chave="nova",
+        chave=f"nova-{modelo or 'livre'}",
     )
     return _pagina(request, "nota_form.html", contexto)
 
@@ -240,12 +241,18 @@ def saude(request: Request):
             con.close()
     except sqlite3.Error:
         banco_ok, total_notas = False, 0
-    ultimo = backup.ultimo(config.backup_dir)
+    existentes = backup.listar(config.backup_dir)
+    ultimo = existentes[0][1] if existentes else None
+    dias_backup = (date.today() - existentes[0][0]).days if existentes else None
+    pendrive_ausente = config.backup_exigir_montagem and not os.path.ismount(config.backup_dir)
     livre = shutil.disk_usage(Path(config.db).resolve().parent).free
     return _pagina(request, "saude.html", {
         "banco_ok": banco_ok,
         "total_notas": total_notas,
         "ultimo_backup": ultimo.name if ultimo else None,
+        "dias_backup": dias_backup,
+        "pendrive_ausente": pendrive_ausente,
+        "backup_dir": config.backup_dir,
         "livre_gb": livre / 1_000_000_000,
     }, 200 if banco_ok else 503)
 

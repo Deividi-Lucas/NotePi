@@ -14,9 +14,21 @@
   var enviando = false;
   var botao = form.querySelector('button[type="submit"]');
 
-  function mostrar(msg) {
+  function mostrar(msg, comDescartar) {
     aviso.textContent = msg || "";
     aviso.hidden = !msg;
+    if (msg && comDescartar) {
+      var descartar = document.createElement("button");
+      descartar.type = "button";
+      descartar.className = "botao";
+      descartar.textContent = "Descartar rascunho";
+      descartar.addEventListener("click", function () {
+        apagar();
+        location.reload();
+      });
+      aviso.appendChild(document.createTextNode(" "));
+      aviso.appendChild(descartar);
+    }
   }
   function ler() {
     try { return JSON.parse(localStorage.getItem(chave)); } catch (e) { return null; }
@@ -40,7 +52,7 @@
       CAMPOS_RASCUNHO.forEach(function (n) {
         if (form.elements[n] && salvo[n] !== undefined) form.elements[n].value = salvo[n];
       });
-      mostrar("Rascunho restaurado deste aparelho.");
+      mostrar("Rascunho restaurado deste aparelho.", true);
       form.elements.conteudo.dispatchEvent(new Event("input", { bubbles: true }));
     }
   }
@@ -66,7 +78,7 @@
     tentativa = null;
     fetch(form.action, { method: "POST", body: new FormData(form) })
       .then(function (resposta) {
-        if (resposta.ok) {
+        if (resposta.ok || resposta.redirected) {
           apagar();
           window.location.href = resposta.url;
           return;
