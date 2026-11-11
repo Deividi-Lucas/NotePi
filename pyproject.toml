@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notepi"
+version = "0.1.0"
+description = "Anotações pessoais com conexões entre Bíblia, tecnologia, finanças e conhecimentos gerais"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.9",
+  "markdown-it-py>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[tool.setuptools.packages.find]
+include = ["notepi*"]
+
+[tool.setuptools.package-data]
+notepi = [
+  "web/templates/*.html",
+  "web/templates/partials/*.html",
+  "web/static/*",
+  "modelos/*.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
