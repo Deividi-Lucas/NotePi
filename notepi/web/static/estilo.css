@@ -1,0 +1,101 @@
+:root {
+  --fundo: #fafaf7;
+  --superficie: #ffffff;
+  --texto: #1f2328;
+  --suave: #656d76;
+  --borda: #d8dee4;
+  --destaque: #2f6f4f;
+  --destaque-texto: #ffffff;
+  --versiculo: #f3ead7;
+  --perigo: #b42318;
+  --marca: #fff3a3;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #15171a;
+    --superficie: #1d2024;
+    --texto: #e6e6e3;
+    --suave: #9aa3ad;
+    --borda: #33383e;
+    --destaque: #58a37c;
+    --destaque-texto: #0d1f16;
+    --versiculo: #3a3220;
+    --perigo: #f07167;
+    --marca: #5c5000;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 760px; margin: 0 auto; padding: 16px; }
+a { color: var(--destaque); }
+h1 { font-size: 1.5rem; margin: .5rem 0 1rem; }
+h2 { font-size: 1.15rem; margin-top: 2rem; }
+
+.topo {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px; background: var(--superficie); border-bottom: 1px solid var(--borda);
+  position: sticky; top: 0; z-index: 1;
+}
+.topo nav { display: flex; gap: 14px; }
+.topo a { text-decoration: none; }
+.marca { font-weight: 700; color: var(--texto); }
+
+input, select, textarea, button { font: inherit; color: inherit; }
+input, select, textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--borda); border-radius: 8px;
+  background: var(--superficie);
+}
+textarea { min-height: 45vh; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 15px; }
+label { display: block; margin-bottom: 14px; font-weight: 600; }
+label > input, label > select, label > textarea { margin-top: 4px; font-weight: 400; }
+
+.busca { margin-bottom: 14px; }
+.busca .linha { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.busca .linha select { flex: 1 1 140px; width: auto; }
+
+.botao {
+  display: inline-block; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--borda);
+  background: var(--superficie); text-decoration: none; color: var(--texto); cursor: pointer;
+}
+.botao.principal { background: var(--destaque); border-color: var(--destaque); color: var(--destaque-texto); font-weight: 600; }
+.botao.perigo { color: var(--perigo); }
+.acoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.acoes form { margin: 0; }
+
+.filtros { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; }
+.filtros a {
+  white-space: nowrap; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--borda);
+  text-decoration: none; color: var(--suave);
+}
+.filtros a.ativo { background: var(--destaque); color: var(--destaque-texto); border-color: var(--destaque); }
+
+.lista { list-style: none; padding: 0; margin: 0; }
+.lista li { border-bottom: 1px solid var(--borda); }
+.lista a, .lista li > div { display: block; padding: 12px 2px; text-decoration: none; color: var(--texto); }
+.lista .com-acao { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.meta { display: block; color: var(--suave); font-size: .9rem; font-weight: 400; }
+.trecho { display: block; color: var(--suave); font-size: .92rem; margin-top: 2px; }
+mark { background: var(--marca); color: inherit; padding: 0 2px; border-radius: 3px; }
+.vazio { color: var(--suave); }
+
+.chips { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip {
+  display: inline-block; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--borda);
+  text-decoration: none; color: var(--texto); font-size: .9rem;
+}
+.chip.versiculo { background: var(--versiculo); }
+
+.aviso { padding: 10px 12px; border-left: 4px solid var(--destaque); background: var(--superficie); }
+.previa { margin: -6px 0 14px; }
+
+.markdown table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+.markdown th, .markdown td { border: 1px solid var(--borda); padding: 6px 8px; text-align: left; }
+.markdown pre { overflow-x: auto; }
+details { margin: 12px 0; padding: 8px 12px; border: 1px solid var(--borda); border-radius: 8px; }

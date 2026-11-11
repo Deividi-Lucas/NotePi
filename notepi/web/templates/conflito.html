@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Conflito · NotePi{% endblock %}
+{% block conteudo %}
+<h1>Esta nota foi alterada em outro aparelho</h1>
+<p class="aviso">Nada foi perdido. Abaixo estão as duas versões: copie o que quiser da versão salva
+  para a sua e salve de novo. Ao salvar, a sua versão substitui a salva.</p>
+
+<details open>
+  <summary>Versão salva ({{ atual.editada_em | data_br }})</summary>
+  <h2>{{ atual.titulo }}</h2>
+  <div class="markdown">{{ atual.conteudo | markdown }}</div>
+</details>
+
+<h2>Sua versão</h2>
+{% include "partials/_form_nota.html" %}
+{% endblock %}
+{% block scripts %}<script src="/static/rascunho.js" defer></script>{% endblock %}

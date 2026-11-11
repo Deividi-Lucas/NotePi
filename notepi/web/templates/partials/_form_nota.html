@@ -1,0 +1,32 @@
+<p id="aviso-rascunho" class="aviso" hidden></p>
+<form id="form-nota" method="post"
+      action="{% if nota_id %}/notas/{{ nota_id }}{% else %}/notas{% endif %}"
+      data-chave-rascunho="{{ chave_rascunho }}">
+  <input type="hidden" name="modelo" value="{{ modelo or '' }}">
+  {% if nota_id %}<input type="hidden" name="editada_em_base" value="{{ editada_em_base }}">{% endif %}
+
+  <label>Título
+    <input name="titulo" value="{{ titulo }}" placeholder="Se ficar vazio, usa a primeira linha do texto">
+  </label>
+
+  <label>Área
+    <select name="area">
+      {% for chave, nome in AREAS.items() %}
+      <option value="{{ chave }}" {% if chave == area %}selected{% endif %}>{{ nome }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>Texto (Markdown)
+    <textarea name="conteudo" rows="16"
+              hx-post="/versiculos/previa" hx-trigger="input changed delay:500ms, load"
+              hx-target="#previa" hx-include="[name='titulo']">{{ conteudo }}</textarea>
+  </label>
+  <div id="previa" class="previa"></div>
+
+  <label>Tags (separadas por vírgula)
+    <input name="tags" value="{{ tags_texto }}" placeholder="pintura, compra">
+  </label>
+
+  <button type="submit" class="botao principal">Salvar</button>
+</form>

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<form action="/busca" method="get" class="busca">
+  <input type="search" name="q" placeholder="Buscar palavra ou versículo (ex.: Rm 12)" aria-label="Buscar">
+</form>
+
+<div class="acoes">
+  <a class="botao principal" href="/notas/nova?modelo=culto">+ Culto</a>
+  <a class="botao" href="/notas/nova?modelo=guia_requisitos">+ Guia</a>
+  <a class="botao" href="/notas/nova">+ Nota</a>
+</div>
+
+<nav class="filtros" aria-label="Filtrar por área">
+  <a href="/" {% if not area %}class="ativo"{% endif %}>Todas</a>
+  {% for chave, nome in AREAS.items() %}
+  <a href="/?area={{ chave }}" {% if area == chave %}class="ativo"{% endif %}>{{ nome }}</a>
+  {% endfor %}
+</nav>
+
+{% include "partials/_lista_notas.html" %}
+{% endblock %}

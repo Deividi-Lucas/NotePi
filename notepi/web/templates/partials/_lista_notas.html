@@ -1,0 +1,14 @@
+{% if notas %}
+<ul class="lista">
+  {% for n in notas %}
+  <li>
+    <a href="/notas/{{ n.id }}">
+      <strong>{{ n.titulo }}</strong>
+      <span class="meta">{{ AREAS[n.area] }} · {{ n.editada_em | data_br }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="vazio">Nenhuma nota por aqui ainda.</p>
+{% endif %}

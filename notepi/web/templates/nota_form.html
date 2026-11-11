@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}{% if nota_id %}Editar nota{% else %}Nova nota{% endif %} · NotePi{% endblock %}
+{% block conteudo %}
+<h1>
+  {% if nota_id %}Editar nota{% else %}Nova nota{% endif %}
+  {% if modelo %}<span class="meta">· {{ MODELOS[modelo] }}</span>{% endif %}
+</h1>
+{% include "partials/_form_nota.html" %}
+{% endblock %}
+{% block scripts %}<script src="/static/rascunho.js" defer></script>{% endblock %}
