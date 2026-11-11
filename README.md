@@ -25,22 +25,32 @@ Abra http://127.0.0.1:8000. Os dados de desenvolvimento ficam na pasta `dados/` 
 - Use a **fonte oficial 5V/2,5A**. Um nobreak pequeno é recomendado.
 
 ### 2. Copiar o projeto para o Pi
+Confirme antes que as últimas alterações estão commitadas: o `git archive` empacota o último commit.
 No PC (PowerShell), dentro da pasta do projeto:
 ```powershell
-scp -r . <seu-usuario>@notepi.local:~/NotePi
+git archive -o notepi.tar.gz HEAD
+scp notepi.tar.gz <seu-usuario>@notepi.local:~/
 ```
+Isso envia só os arquivos do projeto que estão no git (sem `.venv`, sem os dados locais) e mantém a
+permissão de execução do script.
 
-### 3. Instalar
+### 3. Preparar o Tailscale
+Crie uma conta gratuita em **tailscale.com** e instale o app do Tailscale no celular e no PC, sempre
+com a mesma conta. No painel de administração do Tailscale (página **DNS**), ative **MagicDNS** e
+**HTTPS Certificates** **antes** de rodar o script de instalação. Sem isso, o `tailscale serve` pode
+travar ou falhar.
+
+### 4. Instalar
 ```bash
 ssh <seu-usuario>@notepi.local
+mkdir -p ~/NotePi && tar -xzf ~/notepi.tar.gz -C ~/NotePi
 cd ~/NotePi
-sudo ./deploy/instalar.sh
+sudo bash deploy/instalar.sh
 ```
 O script instala tudo, liga o app e o backup diário, e configura o Tailscale. Na primeira vez ele
-mostra um link para você entrar na sua conta Tailscale. No painel do Tailscale, ative **MagicDNS** e
-**HTTPS Certificates**. Instale o app do Tailscale no celular e no PC, com a mesma conta.
+mostra um link para você entrar na sua conta Tailscale.
 
-### 4. Pendrive de backup
+### 5. Pendrive de backup
 Formate o pendrive como ext4 (ou use vfat) e descubra o UUID com `lsblk -f`. Adicione ao `/etc/fstab`:
 ```
 # ext4:
@@ -48,22 +58,42 @@ UUID=<uuid>  /mnt/backup  ext4  defaults,noatime,nofail  0  2
 # ou vfat:
 UUID=<uuid>  /mnt/backup  vfat  defaults,nofail,uid=notepi,gid=notepi,umask=077  0  0
 ```
-Depois: `sudo mount -a`. Se for ext4, rode também `sudo chown notepi:notepi /mnt/backup`.
+Depois: `sudo systemctl daemon-reload` e `sudo mount -a`. Se for ext4, rode também `sudo chown notepi:notepi /mnt/backup`.
 
-### 5. Cópia na nuvem (opcional, recomendado)
+### 6. Cópia na nuvem (opcional, recomendado)
+No PC, instale o rclone (https://rclone.org/downloads/) e rode:
+```powershell
+rclone authorize "drive"
+```
+Ele abre o navegador para você entrar na conta Google e imprime um token. Copie esse token.
+
+No Pi, crie o remote (o Pi não tem tela, por isso o token vem do PC):
 ```bash
-sudo -u notepi rclone config        # crie um remote, por exemplo "gdrive"
+sudo -u notepi -H rclone config
+```
+Crie um remote chamado `gdrive` do tipo `drive`. Quando perguntar **"Use web browser to automatically authenticate?"**,
+responda **n** e cole o token.
+
+Depois aponte o destino e teste:
+```bash
 sudo nano /etc/notepi.env           # NOTEPI_RCLONE_DESTINO=gdrive:NotePi/backup
 sudo systemctl start notepi-manutencao.service   # testa agora
+sudo -u notepi -H rclone ls gdrive:NotePi/backup # deve listar notas-AAAA-MM-DD.db de hoje
 ```
+Se não aparecer nada, veja `journalctl -u notepi-manutencao -n 30`.
 
-### 6. Imagem do cartão
+A nuvem guarda todos os backups (não apaga os antigos). Limpe-a manualmente de vez em quando, se quiser.
+
+### 7. Imagem do cartão
 Com tudo funcionando, desligue (`sudo shutdown now`), coloque o cartão no PC e salve uma imagem
 dele (Win32 Disk Imager, opção "Read"). Se o cartão estragar, grave essa imagem num cartão novo e
 restaure o último backup (abaixo).
 
 ## Atualizar o código no Pi
-Copie a pasta de novo (passo 2) e rode `sudo ./deploy/instalar.sh` outra vez.
+Faça o passo 2 de novo (novo `git archive`, `scp` e `tar` por cima de `~/NotePi`) e depois:
+```bash
+cd ~/NotePi && sudo bash deploy/instalar.sh
+```
 
 ## Restaurar um backup
 ```bash
@@ -72,6 +102,11 @@ sudo cp /mnt/backup/notas-AAAA-MM-DD.db /var/lib/notepi/notas.db
 sudo rm -f /var/lib/notepi/notas.db-wal /var/lib/notepi/notas.db-shm
 sudo chown notepi:notepi /var/lib/notepi/notas.db
 sudo systemctl start notepi
+```
+Se o pendrive for perdido, baixe o backup da nuvem antes e use o arquivo baixado no lugar de `/mnt/backup/...`:
+```bash
+sudo -u notepi -H rclone copy gdrive:NotePi/backup/notas-AAAA-MM-DD.db /tmp/
+sudo cp /tmp/notas-AAAA-MM-DD.db /var/lib/notepi/notas.db
 ```
 
 ## Comandos úteis
