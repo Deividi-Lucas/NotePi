@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block titulo %}Saúde · NotePi{% endblock %}
+{% block conteudo %}
+<h1>Saúde do NotePi</h1>
+<ul class="lista">
+  <li><div><strong>Banco de dados</strong>
+    <span class="meta">{% if banco_ok %}Banco OK{% else %}PROBLEMA: verificação de integridade falhou{% endif %}</span></div></li>
+  <li><div><strong>Notas</strong><span class="meta">{{ total_notas }} ativa(s)</span></div></li>
+  <li><div><strong>Último backup</strong>
+    <span class="meta">{{ ultimo_backup or "nenhum backup encontrado" }}</span></div></li>
+  <li><div><strong>Espaço livre</strong><span class="meta">{{ "%.1f" | format(livre_gb) }} GB</span></div></li>
+</ul>
+<p><a class="botao" href="/exportar">Exportar tudo em Markdown (.zip)</a></p>
+{% endblock %}

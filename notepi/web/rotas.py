@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import shutil
 import sqlite3
+from datetime import date
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from notepi import busca, modelos, notas
+from notepi import backup, busca, livros, modelos, notas, versiculos
 from notepi import tags as tags_mod
 from notepi.db import conectar
 from notepi.web.base import templates
@@ -167,3 +170,83 @@ def restaurar(request: Request, con: Con, nota_id: int):
     except notas.NotaNaoEncontrada:
         return _nao_encontrada(request)
     return _ir_para(f"/notas/{nota_id}")
+
+
+# ---------- busca, tags, lixeira, prévia, saúde e exportação ----------
+
+
+@router.get("/busca")
+def pagina_busca(request: Request, con: Con, q: str = "", area: str | None = None,
+                 modelo: str | None = None, tag: str | None = None):
+    area = area if area in notas.AREAS else None
+    modelo = modelo if modelo in modelos.NOMES else None
+    tag_obj = tags_mod.obter(con, int(tag)) if tag and tag.isdigit() else None
+    filtrando = bool(q.strip() or area or modelo or tag_obj)
+    resultados = (
+        busca.buscar(con, q, area=area, modelo=modelo, tag_id=tag_obj["id"] if tag_obj else None)
+        if filtrando else []
+    )
+    return _pagina(request, "busca.html", {
+        "q": q, "area": area, "modelo": modelo, "tag": tag_obj,
+        "filtrando": filtrando, "resultados": resultados,
+    })
+
+
+@router.get("/tags")
+def pagina_tags(request: Request, con: Con):
+    livres, por_livro = [], {}
+    for t in tags_mod.listar_com_contagem(con):
+        if t["tipo"] == "livre":
+            livres.append(t)
+        else:
+            por_livro.setdefault(livros.por_numero(t["livro"]).nome, []).append(t)
+    return _pagina(request, "tags.html", {"livres": livres, "por_livro": por_livro})
+
+
+@router.get("/tags/{tag_id}")
+def pagina_tag(request: Request, con: Con, tag_id: int):
+    tag = tags_mod.obter(con, tag_id)
+    if tag is None:
+        return _pagina(request, "erro.html", {"mensagem": "Tag não encontrada."}, 404)
+    if tag["tipo"] == "versiculo":
+        cabecalho = f"{livros.por_numero(tag['livro']).nome} {tag['capitulo']}"
+    else:
+        cabecalho = tag["nome"]
+    return _pagina(request, "tag.html", {
+        "tag": tag, "cabecalho": cabecalho, "notas": busca.notas_da_tag(con, tag_id),
+    })
+
+
+@router.get("/lixeira")
+def pagina_lixeira(request: Request, con: Con):
+    return _pagina(request, "lixeira.html", {"notas": notas.lixeira(con)})
+
+
+@router.post("/versiculos/previa")
+def previa_versiculos(request: Request, titulo: Campo = "", conteudo: Campo = ""):
+    refs = versiculos.encontrar(f"{titulo}\n{conteudo}")
+    return _pagina(request, "partials/_previa_versiculos.html", {"refs": refs})
+
+
+@router.get("/saude")
+def saude(request: Request, con: Con):
+    config = request.app.state.config
+    banco_ok = con.execute("PRAGMA quick_check").fetchone()[0] == "ok"
+    ultimo = backup.ultimo(config.backup_dir)
+    livre = shutil.disk_usage(Path(config.db).resolve().parent).free
+    return _pagina(request, "saude.html", {
+        "banco_ok": banco_ok,
+        "total_notas": notas.contar_ativas(con),
+        "ultimo_backup": ultimo.name if ultimo else None,
+        "livre_gb": livre / 1_000_000_000,
+    }, 200 if banco_ok else 503)
+
+
+@router.get("/exportar")
+def exportar(con: Con):
+    nome = f"notepi-{date.today().isoformat()}.zip"
+    return Response(
+        content=backup.exportar_markdown(con),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{nome}"'},
+    )

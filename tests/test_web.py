@@ -1,4 +1,6 @@
+import io
 import re
+import zipfile
 from datetime import date
 
 import pytest
@@ -132,3 +134,56 @@ def test_nota_inexistente(cliente):
 def test_estaticos_basicos(cliente):
     assert cliente.get("/static/htmx.min.js").status_code == 200
     assert cliente.get("/static/estilo.css").status_code == 200
+
+
+def test_excluir_e_restaurar(cliente):
+    nota_id = _criar(cliente, titulo="Some e volta")
+    cliente.post(f"/notas/{nota_id}/excluir")
+    assert "Some e volta" not in cliente.get("/").text
+    assert "Some e volta" in cliente.get("/lixeira").text
+    assert cliente.get(f"/notas/{nota_id}").status_code == 404
+    cliente.post(f"/notas/{nota_id}/restaurar")
+    assert cliente.get(f"/notas/{nota_id}").status_code == 200
+
+
+def test_busca_texto_e_versiculo(cliente):
+    _criar(cliente, titulo="Estudo", conteudo="Princípios de hermenêutica")
+    _criar(cliente, titulo="Culto", conteudo="Rm 12:2")
+    r = cliente.get("/busca", params={"q": "hermeneutica"})
+    assert "1 resultado(s)" in r.text and "<mark>hermenêutica</mark>" in r.text
+    r = cliente.get("/busca", params={"q": "Romanos 12"})
+    assert "Culto" in r.text and "<mark>Romanos 12</mark>" in r.text
+
+
+def test_busca_com_filtros_vazios(cliente):
+    r = cliente.get("/busca", params={"q": "", "area": "", "modelo": "", "tag": ""})
+    assert r.status_code == 200 and "resultado(s)" not in r.text
+
+
+def test_paginas_de_tags(cliente):
+    _criar(cliente, titulo="A", conteudo="Rm 12:2", tags="pintura")
+    r = cliente.get("/tags")
+    assert "Romanos" in r.text and "Romanos 12:2" in r.text and "pintura" in r.text
+    tag_id = re.search(r'href="/tags/(\d+)">Romanos 12:2', r.text).group(1)
+    r = cliente.get(f"/tags/{tag_id}")
+    assert "<h1>Romanos 12</h1>" in r.text and "A" in r.text
+    assert cliente.get("/tags/999").status_code == 404
+
+
+def test_previa_de_versiculos(cliente):
+    r = cliente.post("/versiculos/previa", data={"titulo": "", "conteudo": "Leia Jo 3:16 e Sl 23"})
+    assert "João 3:16" in r.text and "Salmos 23" in r.text
+    assert cliente.post("/versiculos/previa", data={"conteudo": "nada"}).text.strip() == ""
+
+
+def test_saude(cliente):
+    r = cliente.get("/saude")
+    assert r.status_code == 200
+    assert "Banco OK" in r.text and "nenhum backup encontrado" in r.text
+
+
+def test_exportar(cliente):
+    _criar(cliente, titulo="Pincel", conteudo="trincha")
+    r = cliente.get("/exportar")
+    assert r.headers["content-type"] == "application/zip"
+    assert zipfile.ZipFile(io.BytesIO(r.content)).namelist() == ["0001-pincel.md"]

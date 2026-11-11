@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Tags · NotePi{% endblock %}
+{% block conteudo %}
+<h1>Tags</h1>
+
+<h2>Versículos</h2>
+{% if por_livro %}
+  {% for livro, lista in por_livro.items() %}
+  <h3>{{ livro }}</h3>
+  <ul class="chips">
+    {% for t in lista %}<li><a class="chip versiculo" href="/tags/{{ t.id }}">{{ t.nome }} <small>({{ t.total }})</small></a></li>{% endfor %}
+  </ul>
+  {% endfor %}
+{% else %}
+<p class="vazio">Nenhum versículo citado ainda.</p>
+{% endif %}
+
+<h2>Temas</h2>
+{% if livres %}
+<ul class="chips">
+  {% for t in livres %}<li><a class="chip livre" href="/tags/{{ t.id }}">{{ t.nome }} <small>({{ t.total }})</small></a></li>{% endfor %}
+</ul>
+{% else %}
+<p class="vazio">Nenhuma tag criada ainda.</p>
+{% endif %}
+{% endblock %}

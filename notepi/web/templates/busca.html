@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}Buscar · NotePi{% endblock %}
+{% block conteudo %}
+<form action="/busca" method="get" class="busca">
+  <input type="search" name="q" value="{{ q }}" placeholder="Palavra ou versículo (ex.: Romanos 12)" aria-label="Buscar" autofocus>
+  <div class="linha">
+    <select name="area" aria-label="Área">
+      <option value="">Todas as áreas</option>
+      {% for chave, nome in AREAS.items() %}
+      <option value="{{ chave }}" {% if chave == area %}selected{% endif %}>{{ nome }}</option>
+      {% endfor %}
+    </select>
+    <select name="modelo" aria-label="Modelo">
+      <option value="">Qualquer modelo</option>
+      {% for chave, nome in MODELOS.items() %}
+      <option value="{{ chave }}" {% if chave == modelo %}selected{% endif %}>{{ nome }}</option>
+      {% endfor %}
+    </select>
+    <button class="botao">Buscar</button>
+  </div>
+  {% if tag %}
+  <input type="hidden" name="tag" value="{{ tag.id }}">
+  <p class="meta">Só notas com a tag <strong>{{ tag.nome }}</strong> · <a href="/busca?q={{ q | urlencode }}">tirar filtro</a></p>
+  {% endif %}
+</form>
+
+{% if filtrando %}
+<p class="meta">{{ resultados | length }} resultado(s)</p>
+<ul class="lista">
+  {% for r in resultados %}
+  <li>
+    <a href="/notas/{{ r.id }}">
+      <strong>{{ r.titulo }}</strong>
+      <span class="meta">{{ AREAS[r.area] }} · {{ r.editada_em | data_br }}</span>
+      <span class="trecho">{{ r.trecho }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

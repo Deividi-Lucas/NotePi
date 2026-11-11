@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}{{ cabecalho }} · NotePi{% endblock %}
+{% block conteudo %}
+<h1>{{ cabecalho }}</h1>
+<p class="meta">
+  {% if tag.tipo == "versiculo" %}Todas as notas que citam o capítulo {{ cabecalho }}.{% else %}Tag de tema.{% endif %}
+  {{ notas | length }} nota(s) · <a href="/busca?tag={{ tag.id }}">buscar dentro desta tag</a>
+</p>
+{% include "partials/_lista_notas.html" %}
+{% endblock %}

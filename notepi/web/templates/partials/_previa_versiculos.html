@@ -1,0 +1,6 @@
+{% if refs %}
+<p class="meta">Versículos encontrados (viram tags ao salvar):</p>
+<ul class="chips">
+  {% for r in refs %}<li><span class="chip versiculo">{{ r.canonica }}</span></li>{% endfor %}
+</ul>
+{% endif %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}Lixeira · NotePi{% endblock %}
+{% block conteudo %}
+<h1>Lixeira</h1>
+<p class="meta">As notas ficam aqui por 30 dias e depois são apagadas de vez.</p>
+{% if notas %}
+<ul class="lista">
+  {% for n in notas %}
+  <li class="com-acao">
+    <div>
+      <strong>{{ n.titulo }}</strong>
+      <span class="meta">{{ AREAS[n.area] }} · excluída em {{ n.excluida_em | data_br }}</span>
+    </div>
+    <form method="post" action="/notas/{{ n.id }}/restaurar"><button class="botao">Restaurar</button></form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="vazio">A lixeira está vazia.</p>
+{% endif %}
+{% endblock %}
