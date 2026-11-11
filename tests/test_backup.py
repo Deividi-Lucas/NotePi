@@ -1,7 +1,7 @@
 import io
 import sqlite3
 import zipfile
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
@@ -62,3 +62,52 @@ def test_manutencao_exige_pendrive(tmp_path):
     cfg = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "bk", backup_exigir_montagem=True)
     with pytest.raises(RuntimeError, match="não está montado"):
         manutencao.executar(cfg)
+
+
+def test_exportar_markdown_campos_e_lixeira(con):
+    nota_id = notas.criar(con, titulo="Tinta", conteudo="Fosca", area="pintura", tags=["compra"])
+    lixo_id = notas.criar(con, titulo="Descartada", conteudo="sumir", area="geral")
+    notas.excluir(con, lixo_id)
+    nota = notas.obter(con, nota_id)
+    zipado = zipfile.ZipFile(io.BytesIO(backup.exportar_markdown(con)))
+    nomes = zipado.namelist()
+    assert nomes == [f"{nota_id:04d}-tinta.md"]
+    linhas = zipado.read(nomes[0]).decode("utf-8").splitlines()
+    assert "area: pintura" in linhas
+    assert "modelo: " in linhas
+    assert f"criada_em: {nota['criada_em']}" in linhas
+    assert f"editada_em: {nota['editada_em']}" in linhas
+
+
+def test_main_sai_com_codigo_1_quando_falha(tmp_path, monkeypatch):
+    cfg = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "bk", backup_exigir_montagem=True)
+    monkeypatch.setattr(manutencao, "carregar", lambda: cfg)
+    with pytest.raises(SystemExit) as info:
+        manutencao.main()
+    assert info.value.code == 1
+
+
+def test_main_sucesso(tmp_path, monkeypatch):
+    cfg = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "bk")
+    monkeypatch.setattr(manutencao, "carregar", lambda: cfg)
+    manutencao.main()
+    assert list((tmp_path / "bk").glob("notas-*.db"))
+
+
+def test_manutencao_esvazia_lixeira_antiga(tmp_path):
+    cfg = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "bk")
+    con = conectar(cfg.db)
+    try:
+        nota_id = notas.criar(con, titulo="Velha", conteudo="", area="geral")
+        notas.excluir(con, nota_id)
+        antigo = (datetime.now(timezone.utc) - timedelta(days=40)).isoformat(timespec="microseconds")
+        with con:
+            con.execute("UPDATE notas SET excluida_em = ? WHERE id = ?", (antigo, nota_id))
+    finally:
+        con.close()
+    manutencao.executar(cfg)
+    con = conectar(cfg.db)
+    try:
+        assert notas.obter(con, nota_id, incluir_excluidas=True) is None
+    finally:
+        con.close()
