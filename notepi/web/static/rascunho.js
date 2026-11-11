@@ -8,8 +8,11 @@
   var chave = "notepi:rascunho:" + form.dataset.chaveRascunho;
   var aviso = document.getElementById("aviso-rascunho");
   var CAMPOS = ["titulo", "conteudo", "area", "tags"];
+  var CAMPOS_RASCUNHO = CAMPOS.concat(["editada_em_base"]);
   var INTERVALO_MS = 15000;
   var tentativa = null;
+  var enviando = false;
+  var botao = form.querySelector('button[type="submit"]');
 
   function mostrar(msg) {
     aviso.textContent = msg || "";
@@ -20,7 +23,7 @@
   }
   function gravar() {
     var dados = {};
-    CAMPOS.forEach(function (n) { if (form.elements[n]) dados[n] = form.elements[n].value; });
+    CAMPOS_RASCUNHO.forEach(function (n) { if (form.elements[n]) dados[n] = form.elements[n].value; });
     try { localStorage.setItem(chave, JSON.stringify(dados)); } catch (e) { /* sem espaço: segue */ }
   }
   function apagar() {
@@ -34,7 +37,7 @@
       return form.elements[n] && salvo[n] !== undefined && salvo[n] !== form.elements[n].value;
     });
     if (diferente) {
-      CAMPOS.forEach(function (n) {
+      CAMPOS_RASCUNHO.forEach(function (n) {
         if (form.elements[n] && salvo[n] !== undefined) form.elements[n].value = salvo[n];
       });
       mostrar("Rascunho restaurado deste aparelho.");
@@ -50,7 +53,15 @@
     tentativa = setTimeout(enviar, INTERVALO_MS);
   }
 
+  function liberar() {
+    enviando = false;
+    botao.disabled = false;
+  }
+
   function enviar() {
+    if (enviando) return;
+    enviando = true;
+    botao.disabled = true;
     clearTimeout(tentativa);
     tentativa = null;
     fetch(form.action, { method: "POST", body: new FormData(form) })
@@ -65,12 +76,22 @@
             document.open();
             document.write(html);
             document.close();
+            liberar();
           });
         }
+        if (resposta.status >= 500) {
+          liberar();
+          mostrar("Servidor fora do ar (erro " + resposta.status +
+                  "): rascunho salvo neste aparelho. Vou tentar enviar de novo.");
+          agendar();
+          return;
+        }
+        liberar();
         mostrar("O servidor não conseguiu salvar (erro " + resposta.status +
                 "). Seu texto continua guardado neste aparelho.");
       })
       .catch(function () {
+        liberar();
         mostrar("Sem conexão: rascunho salvo neste aparelho. Vou tentar enviar de novo.");
         agendar();
       });

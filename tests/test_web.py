@@ -208,3 +208,9 @@ def test_script_de_rascunho(cliente):
     r = cliente.get("/static/rascunho.js")
     assert r.status_code == 200
     assert "notepi:rascunho:" in r.text
+    assert "Sem conexão: rascunho salvo neste aparelho" in r.text
+    assert "Servidor fora do ar" in r.text
+    assert "editada_em_base" in r.text
+    assert "15000" in r.text
+    assert "409" in r.text
+    assert "enviando" in r.text
