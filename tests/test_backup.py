@@ -111,3 +111,18 @@ def test_manutencao_esvazia_lixeira_antiga(tmp_path):
         assert notas.obter(con, nota_id, incluir_excluidas=True) is None
     finally:
         con.close()
+
+
+def test_verificar_inexistente_nao_cria_arquivo(tmp_path):
+    alvo = tmp_path / "nao-existe.db"
+    assert backup.verificar(alvo) is False
+    assert not alvo.exists()
+
+
+def test_backup_fica_em_arquivo_unico(tmp_path):
+    con = conectar(tmp_path / "notas.db")
+    caminho = backup.fazer_backup(con, tmp_path / "bk")
+    copia = sqlite3.connect(caminho)
+    assert copia.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+    copia.close()
+    con.close()

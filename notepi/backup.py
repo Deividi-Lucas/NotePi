@@ -18,6 +18,8 @@ _NOME = re.compile(r"^notas-(\d{4}-\d{2}-\d{2})\.db$")
 
 def verificar(caminho: Path) -> bool:
     """True se o arquivo é um banco SQLite íntegro."""
+    if not Path(caminho).exists():
+        return False
     con = sqlite3.connect(caminho)
     try:
         return con.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
@@ -37,6 +39,7 @@ def fazer_backup(con: sqlite3.Connection, destino_dir: Path, *, hoje: date | Non
     destino = sqlite3.connect(temporario)
     try:
         con.backup(destino)
+        destino.execute("PRAGMA journal_mode=DELETE")
     finally:
         destino.close()
     if not verificar(temporario):

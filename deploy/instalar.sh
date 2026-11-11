@@ -15,7 +15,8 @@ apt-get install -y python3-venv sqlite3 rclone rsync curl
 echo "==> Usuário 'notepi' e pastas"
 id notepi >/dev/null 2>&1 || useradd --system --home-dir /var/lib/notepi --create-home --shell /usr/sbin/nologin notepi
 install -d -o notepi -g notepi -m 750 /var/lib/notepi
-install -d -m 755 /opt/notepi /mnt/backup
+install -d -m 755 /opt/notepi
+[ -d /mnt/backup ] || mkdir -m 755 /mnt/backup
 
 echo "==> Código e dependências Python"
 rsync -a --delete --exclude .git --exclude .venv --exclude 'dados*' --exclude __pycache__ "$ORIGEM/" /opt/notepi/app/

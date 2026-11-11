@@ -5,4 +5,5 @@ __pycache__/
 dados/
 dados-*/
 build/
+notepi.tar.gz
 .superpowers/
