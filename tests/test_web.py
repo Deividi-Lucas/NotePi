@@ -202,3 +202,9 @@ def test_saude_com_banco_corrompido_responde_503(tmp_path):
         r = c.get("/saude")
     assert r.status_code == 503
     assert "PROBLEMA" in r.text
+
+
+def test_script_de_rascunho(cliente):
+    r = cliente.get("/static/rascunho.js")
+    assert r.status_code == 200
+    assert "notepi:rascunho:" in r.text
