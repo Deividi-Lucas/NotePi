@@ -180,7 +180,7 @@ def pagina_busca(request: Request, con: Con, q: str = "", area: str | None = Non
                  modelo: str | None = None, tag: str | None = None):
     area = area if area in notas.AREAS else None
     modelo = modelo if modelo in modelos.NOMES else None
-    tag_obj = tags_mod.obter(con, int(tag)) if tag and tag.isdigit() else None
+    tag_obj = tags_mod.obter(con, int(tag)) if tag and tag.isascii() and tag.isdigit() else None
     filtrando = bool(q.strip() or area or modelo or tag_obj)
     resultados = (
         busca.buscar(con, q, area=area, modelo=modelo, tag_id=tag_obj["id"] if tag_obj else None)
@@ -229,14 +229,22 @@ def previa_versiculos(request: Request, titulo: Campo = "", conteudo: Campo = ""
 
 
 @router.get("/saude")
-def saude(request: Request, con: Con):
+def saude(request: Request):
     config = request.app.state.config
-    banco_ok = con.execute("PRAGMA quick_check").fetchone()[0] == "ok"
+    try:
+        con = conectar(config.db)
+        try:
+            banco_ok = con.execute("PRAGMA quick_check").fetchone()[0] == "ok"
+            total_notas = notas.contar_ativas(con) if banco_ok else 0
+        finally:
+            con.close()
+    except sqlite3.Error:
+        banco_ok, total_notas = False, 0
     ultimo = backup.ultimo(config.backup_dir)
     livre = shutil.disk_usage(Path(config.db).resolve().parent).free
     return _pagina(request, "saude.html", {
         "banco_ok": banco_ok,
-        "total_notas": notas.contar_ativas(con),
+        "total_notas": total_notas,
         "ultimo_backup": ultimo.name if ultimo else None,
         "livre_gb": livre / 1_000_000_000,
     }, 200 if banco_ok else 503)

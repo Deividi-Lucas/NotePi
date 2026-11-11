@@ -187,3 +187,18 @@ def test_exportar(cliente):
     r = cliente.get("/exportar")
     assert r.headers["content-type"] == "application/zip"
     assert zipfile.ZipFile(io.BytesIO(r.content)).namelist() == ["0001-pincel.md"]
+
+
+def test_busca_tag_com_digito_unicode_ignora_filtro(cliente):
+    r = cliente.get("/busca", params={"q": "x", "tag": "²"})
+    assert r.status_code == 200
+
+
+def test_saude_com_banco_corrompido_responde_503(tmp_path):
+    db = tmp_path / "notas.db"
+    db.write_bytes(b"isto nao e um banco" * 100)
+    config = Config(db=db, backup_dir=tmp_path / "bk")
+    with TestClient(criar_app(config), raise_server_exceptions=False) as c:
+        r = c.get("/saude")
+    assert r.status_code == 503
+    assert "PROBLEMA" in r.text
