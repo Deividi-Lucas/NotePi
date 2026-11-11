@@ -101,10 +101,13 @@ def editar(
         if atual["editada_em"] != editada_em_base:
             raise ConflitoEdicao(atual)
         titulo_final = titulo_efetivo(titulo, conteudo)
-        con.execute(
-            "UPDATE notas SET titulo = ?, conteudo = ?, area = ?, editada_em = ? WHERE id = ?",
-            (titulo_final, conteudo, area, agora(), nota_id),
+        cur = con.execute(
+            "UPDATE notas SET titulo = ?, conteudo = ?, area = ?, editada_em = ? WHERE id = ? AND editada_em = ?",
+            (titulo_final, conteudo, area, agora(), nota_id, editada_em_base),
         )
+        if cur.rowcount == 0:
+            # outro aparelho salvou entre a checagem acima e este UPDATE
+            raise ConflitoEdicao(obter(con, nota_id))
         tags_mod.definir_manuais(con, nota_id, tags)
         tags_mod.sincronizar_auto(con, nota_id, f"{titulo_final}\n{conteudo}")
 

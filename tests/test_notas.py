@@ -91,3 +91,26 @@ def test_modelos():
     assert "| Critério | O que olhar | Por quê |" in modelos.carregar("guia_requisitos")
     with pytest.raises(KeyError):
         modelos.carregar("receita")
+
+
+def test_editar_detecta_conflito_mesmo_apos_a_checagem(con, monkeypatch):
+    from notepi.db import agora
+
+    nota_id = notas.criar(con, titulo="A", conteudo="", area="geral")
+    base = notas.obter(con, nota_id)["editada_em"]
+    obter_real = notas.obter
+    chamadas = {"n": 0}
+
+    def obter_com_outro_aparelho(con_, nota_id_, **kwargs):
+        linha = obter_real(con_, nota_id_, **kwargs)
+        if chamadas["n"] == 0:
+            # outro aparelho salva entre a checagem e o UPDATE
+            con_.execute("UPDATE notas SET editada_em = ? WHERE id = ?", (agora(), nota_id_))
+        chamadas["n"] += 1
+        return linha
+
+    monkeypatch.setattr(notas, "obter", obter_com_outro_aparelho)
+    with pytest.raises(notas.ConflitoEdicao):
+        notas.editar(con, nota_id, titulo="PC", conteudo="", area="geral", tags=[], editada_em_base=base)
+    monkeypatch.setattr(notas, "obter", obter_real)
+    assert notas.obter(con, nota_id)["titulo"] == "A"
