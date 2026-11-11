@@ -49,8 +49,57 @@ def test_criar_e_ver_com_versiculo_e_tags(cliente):
 
 
 def test_markdown_nao_executa_html(cliente):
-    nota_id = _criar(cliente, titulo="x", conteudo="<script>alert(1)</script>")
-    assert "<script>alert(1)</script>" not in cliente.get(f"/notas/{nota_id}").text
+    nota_id = _criar(cliente, titulo="<b>t</b>", conteudo="<script>alert(1)</script>")
+    html = cliente.get(f"/notas/{nota_id}").text
+    assert "<script>alert(1)</script>" not in html
+    assert "<b>t</b>" not in html
+    assert "&lt;script&gt;" in html
+    assert "&lt;b&gt;" in html
+
+
+def test_conflito_escapa_html(cliente):
+    nota_id = _criar(cliente, titulo="Original")
+    base = _base(cliente, nota_id)
+    campos = {"titulo": "<b>x</b>", "conteudo": "<script>x()</script>", "area": "geral", "tags": "",
+              "editada_em_base": base}
+    assert cliente.post(f"/notas/{nota_id}", data=campos, follow_redirects=False).status_code == 303
+    campos["titulo"] = "Do PC"
+    r = cliente.post(f"/notas/{nota_id}", data=campos)
+    assert r.status_code == 409
+    assert "<script>x()" not in r.text
+    assert "<b>x</b>" not in r.text
+    assert "&lt;script&gt;" in r.text
+    assert "&lt;b&gt;x" in r.text
+
+
+def test_erro_inesperado_mostra_pagina_amigavel(tmp_path, monkeypatch):
+    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "backup")
+
+    def quebrar(*args, **kwargs):
+        raise RuntimeError("falha simulada")
+
+    monkeypatch.setattr("notepi.notas.recentes", quebrar)
+    with TestClient(criar_app(config), raise_server_exceptions=False) as c:
+        r = c.get("/")
+    assert r.status_code == 500
+    assert "Algo deu errado" in r.text
+
+
+def test_404_em_editar_salvar_e_restaurar(cliente):
+    assert cliente.get("/notas/999/editar").status_code == 404
+    campos = {"titulo": "x", "conteudo": "", "area": "geral", "tags": "", "editada_em_base": "qualquer"}
+    assert cliente.post("/notas/999", data=campos).status_code == 404
+    assert cliente.post("/notas/999/restaurar").status_code == 404
+
+
+def test_area_e_modelo_invalidos_viram_padrao(cliente):
+    nota_id = _criar(cliente, titulo="Sem modelo", conteudo="x", area="xyz", modelo="receita")
+    html = cliente.get(f"/notas/{nota_id}").text
+    assert "Geral" in html
+    assert "receita" not in html
+    r = cliente.get("/notas/nova?modelo=receita&area=xyz")
+    assert r.status_code == 200
+    assert '<option value="geral" selected>' in r.text
 
 
 def test_relacionadas_aparecem(cliente):
