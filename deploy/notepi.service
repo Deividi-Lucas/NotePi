@@ -1,0 +1,15 @@
+[Unit]
+Description=NotePi (app web de anotações)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=notepi
+Group=notepi
+EnvironmentFile=/etc/notepi.env
+ExecStart=/opt/notepi/venv/bin/uvicorn notepi.app:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

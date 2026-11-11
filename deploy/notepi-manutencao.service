@@ -1,0 +1,11 @@
+[Unit]
+Description=NotePi: esvazia a lixeira antiga, faz backup e envia para a nuvem
+
+[Service]
+Type=oneshot
+User=notepi
+Group=notepi
+EnvironmentFile=/etc/notepi.env
+ExecStart=/opt/notepi/venv/bin/python -m notepi.manutencao
+# O "-" faz o systemd não marcar falha se a nuvem estiver fora do ar; o backup no pendrive já foi feito.
+ExecStartPost=-/bin/sh -c 'if [ -n "$NOTEPI_RCLONE_DESTINO" ]; then rclone copy "$NOTEPI_BACKUP_DIR" "$NOTEPI_RCLONE_DESTINO" --include "notas-*.db" --max-age 48h; fi'
