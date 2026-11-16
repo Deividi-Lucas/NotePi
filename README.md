@@ -17,6 +17,15 @@ python -m venv .venv
 
 Abra http://127.0.0.1:8000. Os dados de desenvolvimento ficam na pasta `dados/` (fora do git).
 
+### Dependências travadas
+O Pi instala exatamente as versões (com hashes) de `requirements.lock`. Depois de mudar `pyproject.toml`
+(ou para atualizar versões), gere o arquivo de novo e rode os testes:
+```powershell
+.venv\Scripts\python -m pip install uv
+.venv\Scripts\python -m uv pip compile pyproject.toml --universal --python-version 3.11 --generate-hashes -o requirements.lock
+```
+O Dependabot (`.github/dependabot.yml`) abre PRs semanais com atualizações de dependências.
+
 ## Instalar no Raspberry Pi 3B
 
 ### 1. Preparar o cartão SD

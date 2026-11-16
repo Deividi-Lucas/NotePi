@@ -22,7 +22,8 @@ echo "==> Código e dependências Python"
 rsync -a --delete --chown=root:root --exclude .git --exclude .venv --exclude 'dados*' --exclude __pycache__ "$ORIGEM/" /opt/notepi/app/
 [ -d /opt/notepi/venv ] || python3 -m venv /opt/notepi/venv
 /opt/notepi/venv/bin/pip install --upgrade pip
-/opt/notepi/venv/bin/pip install /opt/notepi/app
+/opt/notepi/venv/bin/pip install --require-hashes -r /opt/notepi/app/requirements.lock
+/opt/notepi/venv/bin/pip install --no-deps /opt/notepi/app
 
 echo "==> Configuração"
 if [ ! -f /etc/notepi.env ]; then
