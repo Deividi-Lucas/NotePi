@@ -1,7 +1,7 @@
 # NotePi — Especificação de design
 
 **Data:** 2026-11-10
-**Autor:** Deividi Santos
+**Autor:** Deividi-Lucas
 **Status:** design aprovado em partes; aguardando revisão deste documento
 
 ## 1. Objetivo

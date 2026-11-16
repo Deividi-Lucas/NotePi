@@ -20,6 +20,8 @@ Nada aqui perde dados; são melhorias de robustez, testes e conforto.
 - `sed` no `/etc/fstab` sem cópia de segurança; `DNSName` vazio se o MagicDNS estiver desligado.
 - Serviço sem endurecimento do systemd (`ProtectSystem=strict`, `NoNewPrivileges`).
 - `notepi-manutencao.service` sem `After=time-sync.target` (o Pi 3B não tem relógio próprio).
+- Usuário separado para o rclone (hoje roda como `notepi`, junto com o app).
+- Trocar o `curl | sh` de instalação do Tailscale pelo repositório apt oficial.
 
 ## Interface
 - Erros 404/422 de endereços desconhecidos aparecem em JSON e em inglês.
