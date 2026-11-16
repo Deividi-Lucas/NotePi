@@ -12,6 +12,7 @@ class Config:
     db: Path
     backup_dir: Path
     backup_exigir_montagem: bool = False
+    backup_marcador: bool = False  # exige o arquivo .notepi-pendrive (uso no k3s)
     hosts: tuple[str, ...] = ("127.0.0.1", "localhost")
     usuarios: tuple[str, ...] = ()  # vazio = qualquer pessoa da tailnet
 
@@ -27,6 +28,7 @@ def carregar() -> Config:
         db=Path(os.environ.get("NOTEPI_DB", dados / "notas.db")),
         backup_dir=Path(os.environ.get("NOTEPI_BACKUP_DIR", dados / "backup")),
         backup_exigir_montagem=os.environ.get("NOTEPI_BACKUP_EXIGIR_MONTAGEM") == "1",
+        backup_marcador=os.environ.get("NOTEPI_BACKUP_MARCADOR") == "1",
         # lista vazia viraria "qualquer host" no Starlette; por isso cai no padrão
         hosts=_lista("NOTEPI_HOSTS") or ("127.0.0.1", "localhost"),
         usuarios=_lista("NOTEPI_USUARIOS"),

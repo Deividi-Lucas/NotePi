@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import os
 import re
 import sqlite3
 import zipfile
@@ -11,9 +12,23 @@ from pathlib import Path
 
 from notepi import notas
 from notepi import tags as tags_mod
+from notepi.config import Config
 from notepi.texto import slug
 
 _NOME = re.compile(r"^notas-(\d{4}-\d{2}-\d{2})\.db$")
+
+# Arquivo que o usuário cria uma vez no pendrive. No k3s o diretório é um hostPath e sempre
+# parece "montado" dentro do container; o marcador é o jeito de saber que o pendrive está lá.
+MARCADOR = ".notepi-pendrive"
+
+
+def destino_indisponivel(config: Config) -> str | None:
+    """Motivo pelo qual o destino do backup não pode ser usado agora, ou None se está ok."""
+    if config.backup_marcador and not (Path(config.backup_dir) / MARCADOR).is_file():
+        return f"pendrive de backup ausente (arquivo {MARCADOR} não encontrado em {config.backup_dir})"
+    if config.backup_exigir_montagem and not os.path.ismount(config.backup_dir):
+        return f"{config.backup_dir} não está montado (o pendrive está conectado?)"
+    return None
 
 
 def verificar(caminho: Path) -> bool:

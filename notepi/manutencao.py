@@ -6,7 +6,6 @@ Uso: python -m notepi.manutencao
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -18,8 +17,9 @@ log = logging.getLogger("notepi.manutencao")
 
 
 def executar(config: Config) -> Path:
-    if config.backup_exigir_montagem and not os.path.ismount(config.backup_dir):
-        raise RuntimeError(f"{config.backup_dir} não está montado (o pendrive está conectado?)")
+    motivo = backup.destino_indisponivel(config)
+    if motivo:
+        raise RuntimeError(motivo)
     con = conectar(config.db)
     try:
         removidas = notas.purgar_lixeira(con)

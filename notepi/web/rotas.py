@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import shutil
 import sqlite3
 from datetime import date
@@ -248,7 +247,7 @@ def saude(request: Request):
     existentes = backup.listar(config.backup_dir)
     ultimo = existentes[0][1] if existentes else None
     dias_backup = (date.today() - existentes[0][0]).days if existentes else None
-    pendrive_ausente = config.backup_exigir_montagem and not os.path.ismount(config.backup_dir)
+    pendrive_ausente = backup.destino_indisponivel(config) is not None
     livre = shutil.disk_usage(Path(config.db).resolve().parent).free
     return _pagina(request, "saude.html", {
         "banco_ok": banco_ok,

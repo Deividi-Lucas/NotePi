@@ -126,3 +126,31 @@ def test_backup_fica_em_arquivo_unico(tmp_path):
     assert copia.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
     copia.close()
     con.close()
+
+
+def test_manutencao_exige_marcador_do_pendrive(tmp_path):
+    bk = tmp_path / "bk"
+    bk.mkdir()
+    cfg = Config(db=tmp_path / "notas.db", backup_dir=bk, backup_marcador=True)
+    with pytest.raises(RuntimeError, match=r"\.notepi-pendrive"):
+        manutencao.executar(cfg)
+    assert backup.listar(bk) == []
+
+
+def test_manutencao_com_marcador_faz_backup(tmp_path):
+    bk = tmp_path / "bk"
+    bk.mkdir()
+    (bk / backup.MARCADOR).write_text("")
+    cfg = Config(db=tmp_path / "notas.db", backup_dir=bk, backup_marcador=True)
+    caminho = manutencao.executar(cfg)
+    assert caminho.exists() and backup.verificar(caminho)
+
+
+def test_destino_indisponivel(tmp_path):
+    bk = tmp_path / "bk"
+    bk.mkdir()
+    assert backup.destino_indisponivel(Config(db=tmp_path / "n.db", backup_dir=bk)) is None
+    sem_marcador = Config(db=tmp_path / "n.db", backup_dir=bk, backup_marcador=True)
+    assert "não encontrado" in backup.destino_indisponivel(sem_marcador)
+    (bk / backup.MARCADOR).write_text("")
+    assert backup.destino_indisponivel(sem_marcador) is None

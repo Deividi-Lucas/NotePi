@@ -427,3 +427,26 @@ def test_nota_grande_com_acentos_enviada_como_o_rascunho_passa(cliente):
     r = cliente.post("/notas", data={"titulo": "x"}, files={"conteudo": (None, ("a" * 19 + "ç ") * 45_000)},
                      follow_redirects=False)
     assert r.status_code == 303
+
+
+def test_saude_sem_marcador_do_pendrive_avisa(tmp_path):
+    r = _saude_com_backup(tmp_path, 0, backup_marcador=True)
+    assert "não está montado" in r.text
+
+
+def test_saude_com_marcador_do_pendrive_nao_avisa(tmp_path):
+    (tmp_path / "bk").mkdir()
+    (tmp_path / "bk" / ".notepi-pendrive").write_text("")
+    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "bk", hosts=("testserver",),
+                    backup_marcador=True)
+    with TestClient(criar_app(config), raise_server_exceptions=False) as c:
+        assert "não está montado" not in c.get("/saude").text
+
+
+def test_carregar_le_backup_marcador(monkeypatch):
+    from notepi.config import carregar
+
+    monkeypatch.setenv("NOTEPI_BACKUP_MARCADOR", "1")
+    assert carregar().backup_marcador is True
+    monkeypatch.delenv("NOTEPI_BACKUP_MARCADOR")
+    assert carregar().backup_marcador is False
