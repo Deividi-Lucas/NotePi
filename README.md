@@ -155,6 +155,18 @@ sudo -u notepi -H rclone copy cofre:backup/notas-AAAA-MM-DD.db /tmp/
 sudo cp /tmp/notas-AAAA-MM-DD.db /var/lib/notepi/notas.db
 ```
 
+## Rodar no k3s (Raspberry Pi 4)
+
+O NotePi também roda num cluster k3s gerido por GitOps, junto com outros serviços. A configuração do cluster fica no
+repositório [homelab](https://github.com/Deividi-Lucas/homelab) e o passo a passo está no README dele.
+
+- A cada push na `main`, a CI testa, gera a imagem `ghcr.io/deividi-lucas/notepi:sha-<commit>` (arm64 e amd64),
+  passa pelo Trivy e atualiza o homelab; o Argo CD instala a versão nova no Pi.
+- No cluster o backup é um CronJob às 03:00. Como o pendrive aparece sempre "montado" dentro do container, o
+  backup exige o arquivo marcador **`.notepi-pendrive`** na raiz do pendrive (`NOTEPI_BACKUP_MARCADOR=1`).
+  Crie uma vez: `sudo touch /mnt/backup/.notepi-pendrive`.
+- A instalação com systemd (seções acima) continua valendo para quem não usa Kubernetes.
+
 ## Comandos úteis
 - Ver se está rodando: `systemctl status notepi`
 - Ver erros: `journalctl -u notepi -n 50`
