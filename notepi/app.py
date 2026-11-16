@@ -37,7 +37,14 @@ def criar_app(config: Config | None = None) -> FastAPI:
 
     @app.middleware("http")
     async def protecao(request: Request, call_next):
-        if _veio_de_outro_site(request):
+        usuarios = request.app.state.config.usuarios
+        if usuarios and not request.url.path.startswith("/static/") and (
+            request.headers.get("tailscale-user-login") not in usuarios
+        ):
+            resposta = templates.TemplateResponse(
+                request, "erro.html", {"mensagem": "Acesso não autorizado."}, status_code=403
+            )
+        elif _veio_de_outro_site(request):
             resposta = templates.TemplateResponse(
                 request, "erro.html", {"mensagem": "Pedido bloqueado: veio de outro site."}, status_code=403
             )

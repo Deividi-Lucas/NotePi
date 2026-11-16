@@ -13,6 +13,7 @@ class Config:
     backup_dir: Path
     backup_exigir_montagem: bool = False
     hosts: tuple[str, ...] = ("127.0.0.1", "localhost")
+    usuarios: tuple[str, ...] = ()  # vazio = qualquer pessoa da tailnet
 
 
 def _lista(nome: str) -> tuple[str, ...]:
@@ -28,4 +29,5 @@ def carregar() -> Config:
         backup_exigir_montagem=os.environ.get("NOTEPI_BACKUP_EXIGIR_MONTAGEM") == "1",
         # lista vazia viraria "qualquer host" no Starlette; por isso cai no padrão
         hosts=_lista("NOTEPI_HOSTS") or ("127.0.0.1", "localhost"),
+        usuarios=_lista("NOTEPI_USUARIOS"),
     )

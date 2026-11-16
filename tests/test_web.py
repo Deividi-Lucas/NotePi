@@ -305,3 +305,34 @@ def test_carregar_le_hosts_do_ambiente(monkeypatch):
     assert carregar().hosts == ("127.0.0.1", "localhost")
     monkeypatch.setenv("NOTEPI_HOSTS", "pi.tail1234.ts.net, 127.0.0.1")
     assert carregar().hosts == ("pi.tail1234.ts.net", "127.0.0.1")
+
+
+def _cliente_com_usuarios(tmp_path, usuarios):
+    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "backup", hosts=("testserver",),
+                    usuarios=usuarios)
+    return TestClient(criar_app(config), raise_server_exceptions=False)
+
+
+def test_sem_lista_de_usuarios_o_acesso_e_livre(cliente):
+    assert cliente.get("/").status_code == 200
+
+
+def test_lista_de_usuarios_exige_cabecalho_do_tailscale(tmp_path):
+    with _cliente_com_usuarios(tmp_path, ("eu@x",)) as c:
+        assert c.get("/", headers={"Tailscale-User-Login": "eu@x"}).status_code == 200
+        r = c.get("/")
+        assert r.status_code == 403 and "Acesso não autorizado." in r.text
+        r = c.get("/", headers={"Tailscale-User-Login": "outro@x"})
+        assert r.status_code == 403
+        r = c.post("/notas", data={"titulo": "x"}, follow_redirects=False)
+        assert r.status_code == 403
+        assert c.get("/static/estilo.css").status_code == 200
+
+
+def test_carregar_le_usuarios_do_ambiente(monkeypatch):
+    from notepi.config import carregar
+
+    monkeypatch.delenv("NOTEPI_USUARIOS", raising=False)
+    assert carregar().usuarios == ()
+    monkeypatch.setenv("NOTEPI_USUARIOS", "eu@x, ela@y")
+    assert carregar().usuarios == ("eu@x", "ela@y")

@@ -89,6 +89,32 @@ Com tudo funcionando, desligue (`sudo shutdown now`), coloque o cartão no PC e 
 dele (Win32 Disk Imager, opção "Read"). Se o cartão estragar, grave essa imagem num cartão novo e
 restaure o último backup (abaixo).
 
+## Quem pode acessar
+Por padrão, qualquer aparelho da sua tailnet que alcance o Pi abre o app. Há duas camadas para restringir isso.
+
+**1. ACL no painel do Tailscale (Access controls).** Marque o Pi com uma tag e libere só o seu usuário na porta 443.
+No Pi: `sudo tailscale up --advertise-tags=tag:notepi`. No painel, em **Access controls**, use algo como (troque o e-mail pelo seu login):
+```json
+{
+  "tagOwners": { "tag:notepi": ["voce@example.com"] },
+  "grants": [
+    { "src": ["voce@example.com"], "dst": ["tag:notepi"], "ip": ["tcp:443"] }
+  ]
+}
+```
+Se a sua tailnet ainda usa `acls`, o equivalente é `{"action": "accept", "src": ["voce@example.com"], "dst": ["tag:notepi:443"]}`.
+Cuidado para não tirar o seu próprio acesso (SSH ao Pi, por exemplo) ao trocar a política.
+
+**2. Lista de usuários no app.** Em `/etc/notepi.env`, preencha com o seu login do Tailscale (vários, separados por vírgula):
+```
+NOTEPI_USUARIOS=voce@example.com
+```
+e rode `sudo systemctl restart notepi`. Com a lista preenchida, o app recusa (403) qualquer pedido sem o cabeçalho
+`Tailscale-User-Login` com um desses valores. Vazia = desligado.
+
+Atenção: esse cabeçalho só é confiável enquanto o uvicorn escuta em `127.0.0.1` atrás do `tailscale serve`, que o
+preenche e descarta o que vier do cliente. Se expuser a porta 8000 de outro jeito, qualquer um poderia forjá-lo.
+
 ## Atualizar o código no Pi
 Faça o passo 2 de novo (novo `git archive`, `scp` e `tar` por cima de `~/NotePi`) e depois:
 ```bash
