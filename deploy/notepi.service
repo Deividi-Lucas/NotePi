@@ -10,6 +10,23 @@ EnvironmentFile=/etc/notepi.env
 ExecStart=/opt/notepi/venv/bin/uvicorn notepi.app:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --limit-concurrency 20
 Restart=on-failure
 RestartSec=5
+# Isolamento: o serviço só enxerga o que precisa
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/notepi /mnt/backup
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+UMask=0077
+MemoryMax=300M
 
 [Install]
 WantedBy=multi-user.target

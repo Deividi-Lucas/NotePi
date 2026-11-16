@@ -16,10 +16,10 @@ echo "==> Usuário 'notepi' e pastas"
 id notepi >/dev/null 2>&1 || useradd --system --home-dir /var/lib/notepi --create-home --shell /usr/sbin/nologin notepi
 install -d -o notepi -g notepi -m 750 /var/lib/notepi
 install -d -m 755 /opt/notepi
-[ -d /mnt/backup ] || mkdir -m 755 /mnt/backup
+[ -d /mnt/backup ] || mkdir -m 700 /mnt/backup
 
 echo "==> Código e dependências Python"
-rsync -a --delete --exclude .git --exclude .venv --exclude 'dados*' --exclude __pycache__ "$ORIGEM/" /opt/notepi/app/
+rsync -a --delete --chown=root:root --exclude .git --exclude .venv --exclude 'dados*' --exclude __pycache__ "$ORIGEM/" /opt/notepi/app/
 [ -d /opt/notepi/venv ] || python3 -m venv /opt/notepi/venv
 /opt/notepi/venv/bin/pip install --upgrade pip
 /opt/notepi/venv/bin/pip install /opt/notepi/app
@@ -47,7 +47,7 @@ else
   systemctl enable --now zramswap || true
 fi
 # 3) noatime na partição raiz (o Raspberry Pi OS normalmente já vem assim)
-sed -i -E '/[[:space:]]\/[[:space:]]+ext4[[:space:]]/ { /noatime/! s/(ext4[[:space:]]+)([^[:space:]]+)/\1\2,noatime/ }' /etc/fstab
+sed -i.bak -E '/[[:space:]]\/[[:space:]]+ext4[[:space:]]/ { /noatime/! s/(ext4[[:space:]]+)([^[:space:]]+)/\1\2,noatime/ }' /etc/fstab
 
 echo "==> Serviços"
 install -m 644 "$ORIGEM/deploy/notepi.service" "$ORIGEM/deploy/notepi-manutencao.service" \

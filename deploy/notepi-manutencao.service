@@ -9,3 +9,19 @@ EnvironmentFile=/etc/notepi.env
 ExecStart=/opt/notepi/venv/bin/python -m notepi.manutencao
 # O "-" faz o systemd não marcar falha se a nuvem estiver fora do ar; o backup no pendrive já foi feito.
 ExecStartPost=-/bin/sh -c 'if [ -n "$NOTEPI_RCLONE_DESTINO" ]; then rclone copy "$NOTEPI_BACKUP_DIR" "$NOTEPI_RCLONE_DESTINO" --include "notas-*.db" --max-age 48h; fi'
+# Isolamento: o serviço só enxerga o que precisa
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/notepi /mnt/backup
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+UMask=0077
