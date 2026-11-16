@@ -353,3 +353,42 @@ def test_pedido_grande_sem_content_length_e_recusado(cliente):
     r = cliente.post("/notas", content=corpo(), headers={"Content-Type": "application/x-www-form-urlencoded"},
                      follow_redirects=False)
     assert r.status_code == 413
+
+
+def test_csp_e_referrer_policy(cliente):
+    r = cliente.get("/")
+    assert r.headers["referrer-policy"] == "no-referrer"
+    csp = r.headers["content-security-policy"]
+    assert "default-src 'self'" in csp and "script-src 'self'" in csp
+    assert "frame-ancestors 'none'" in csp and "form-action 'self'" in csp
+    assert "img-src 'self' data:" in csp and "base-uri 'none'" in csp
+
+
+def test_pagina_da_nota_sem_javascript_inline(cliente):
+    nota_id = _criar(cliente, titulo="x")
+    html = cliente.get(f"/notas/{nota_id}").text
+    assert "onsubmit=" not in html
+    assert 'data-confirmar="Mover esta nota para a lixeira?"' in html
+    assert "/static/confirmar.js" in html
+    js = cliente.get("/static/confirmar.js")
+    assert js.status_code == 200 and "data-confirmar" in js.text
+
+
+def test_resposta_500_tem_cabecalhos_de_seguranca(tmp_path, monkeypatch):
+    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "backup", hosts=("testserver",))
+
+    def quebrar(*args, **kwargs):
+        raise RuntimeError("falha simulada")
+
+    monkeypatch.setattr("notepi.notas.recentes", quebrar)
+    with TestClient(criar_app(config), raise_server_exceptions=False) as c:
+        r = c.get("/")
+    assert r.status_code == 500
+    assert r.headers["x-frame-options"] == "DENY"
+    assert "default-src 'self'" in r.headers["content-security-policy"]
+
+
+def test_htmx_configurado_de_forma_restrita(cliente):
+    html = cliente.get("/").text
+    assert 'name="htmx-config"' in html
+    assert '"allowEval":false' in html

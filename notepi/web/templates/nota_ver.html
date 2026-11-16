@@ -17,8 +17,7 @@
 
 <div class="acoes">
   <a class="botao principal" href="/notas/{{ nota.id }}/editar">Editar</a>
-  <form method="post" action="/notas/{{ nota.id }}/excluir"
-        onsubmit="return confirm('Mover esta nota para a lixeira?')">
+  <form method="post" action="/notas/{{ nota.id }}/excluir" data-confirmar="Mover esta nota para a lixeira?">
     <button class="botao perigo">Excluir</button>
   </form>
 </div>

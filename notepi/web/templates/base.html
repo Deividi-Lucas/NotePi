@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}NotePi{% endblock %}</title>
   <link rel="stylesheet" href="/static/estilo.css">
+  <meta name="htmx-config" content='{"selfRequestsOnly":true,"allowEval":false,"allowScriptTags":false,"includeIndicatorStyles":false}'>
   <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/confirmar.js" defer></script>
 </head>
 <body>
   <header class="topo">

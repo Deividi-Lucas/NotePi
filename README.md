@@ -26,6 +26,11 @@ O Pi instala exatamente as versões (com hashes) de `requirements.lock`. Depois 
 ```
 O Dependabot (`.github/dependabot.yml`) abre PRs semanais com atualizações de dependências.
 
+### htmx
+O htmx é servido localmente (`notepi/web/static/htmx.min.js`), versão **1.9.12**, SHA-256
+`449317ade7881e949510db614991e195c3a099c4c791c24dacec55f9f4a2a452`. Confira com `sha256sum` (ou
+`Get-FileHash`) ao atualizá-lo. A configuração restrita (`htmx-config`) fica em `base.html`.
+
 ## Instalar no Raspberry Pi 3B
 
 ### 1. Preparar o cartão SD

@@ -17,6 +17,19 @@ from notepi.web.limites import LimiteDeTamanho
 log = logging.getLogger("notepi")
 
 
+CSP = (
+    "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
+    "frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+)
+
+
+def _cabecalhos_de_seguranca(resposta) -> None:
+    resposta.headers["X-Frame-Options"] = "DENY"
+    resposta.headers["X-Content-Type-Options"] = "nosniff"
+    resposta.headers["Content-Security-Policy"] = CSP
+    resposta.headers["Referrer-Policy"] = "no-referrer"
+
+
 def _veio_de_outro_site(request: Request) -> bool:
     """CSRF: POST que o navegador diz (Sec-Fetch-Site ou Origin) ter saído de outro site."""
     if request.method != "POST":
@@ -51,8 +64,7 @@ def criar_app(config: Config | None = None) -> FastAPI:
             )
         else:
             resposta = await call_next(request)
-        resposta.headers["X-Frame-Options"] = "DENY"
-        resposta.headers["X-Content-Type-Options"] = "nosniff"
+        _cabecalhos_de_seguranca(resposta)
         return resposta
 
     # Registrado por último = mais externo: confere o Host antes de qualquer outra coisa (DNS rebinding).
@@ -62,7 +74,9 @@ def criar_app(config: Config | None = None) -> FastAPI:
     @app.exception_handler(Exception)
     async def erro_inesperado(request: Request, exc: Exception):
         log.exception("erro inesperado em %s %s", request.method, request.url.path)
-        return templates.TemplateResponse(request, "erro.html", {}, status_code=500)
+        resposta = templates.TemplateResponse(request, "erro.html", {}, status_code=500)
+        _cabecalhos_de_seguranca(resposta)  # este handler roda fora do middleware acima
+        return resposta
 
     return app
 
