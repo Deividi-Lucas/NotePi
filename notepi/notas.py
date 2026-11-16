@@ -48,6 +48,14 @@ def titulo_efetivo(titulo: str, conteudo: str, momento: datetime | None = None) 
     return f"Nota de {(momento or datetime.now()):%d/%m/%Y}"
 
 
+def _momento_depois(base: str) -> str:
+    """Novo editada_em, sempre posterior a `base` (mesmo se o relógio empatar ou andar para trás)."""
+    momento = agora()
+    if momento > base:
+        return momento
+    return (datetime.fromisoformat(base) + timedelta(microseconds=1)).isoformat(timespec="microseconds")
+
+
 def _validar(area: str, modelo: str | None) -> None:
     if area not in AREAS:
         raise ValueError(f"área inválida: {area!r}")
@@ -109,7 +117,7 @@ def editar(
         titulo_final = titulo_efetivo(titulo, conteudo)
         cur = con.execute(
             "UPDATE notas SET titulo = ?, conteudo = ?, area = ?, editada_em = ? WHERE id = ? AND editada_em = ?",
-            (titulo_final, conteudo, area, agora(), nota_id, editada_em_base),
+            (titulo_final, conteudo, area, _momento_depois(editada_em_base), nota_id, editada_em_base),
         )
         if cur.rowcount == 0:
             # outro aparelho salvou entre a checagem acima e este UPDATE

@@ -69,7 +69,7 @@ def criar_app(config: Config | None = None) -> FastAPI:
         _cabecalhos_de_seguranca(resposta)
         return resposta
 
-    # Registrado por último = mais externo: confere o Host antes de qualquer outra coisa (DNS rebinding).
+    # Quem é registrado por último fica mais externo: primeiro o limite de tamanho, depois o Host (DNS rebinding).
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(app.state.config.hosts))
     app.add_middleware(LimiteDeTamanho)
 

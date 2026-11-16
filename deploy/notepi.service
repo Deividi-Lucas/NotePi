@@ -13,7 +13,7 @@ RestartSec=5
 # Isolamento: o serviço só enxerga o que precisa
 NoNewPrivileges=yes
 ProtectSystem=strict
-ReadWritePaths=/var/lib/notepi /mnt/backup
+ReadWritePaths=/var/lib/notepi
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes

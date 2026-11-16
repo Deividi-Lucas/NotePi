@@ -50,14 +50,6 @@ fi
 # 3) noatime na partição raiz (o Raspberry Pi OS normalmente já vem assim)
 sed -i.bak -E '/[[:space:]]\/[[:space:]]+ext4[[:space:]]/ { /noatime/! s/(ext4[[:space:]]+)([^[:space:]]+)/\1\2,noatime/ }' /etc/fstab
 
-echo "==> Serviços"
-install -m 644 "$ORIGEM/deploy/notepi.service" "$ORIGEM/deploy/notepi-manutencao.service" \
-  "$ORIGEM/deploy/notepi-manutencao.timer" /etc/systemd/system/
-systemctl daemon-reload
-systemctl enable notepi.service notepi-manutencao.timer
-systemctl restart notepi.service
-systemctl start notepi-manutencao.timer
-
 echo "==> Tailscale (acesso de qualquer lugar)"
 command -v tailscale >/dev/null 2>&1 || curl -fsSL https://tailscale.com/install.sh | sh
 tailscale status >/dev/null 2>&1 || tailscale up
@@ -73,8 +65,15 @@ elif ! grep -E '^NOTEPI_HOSTS=' /etc/notepi.env | grep -qF "$ENDERECO"; then
   else
     echo "NOTEPI_HOSTS=$ENDERECO,127.0.0.1,localhost" >> /etc/notepi.env
   fi
-  systemctl restart notepi.service
 fi
+
+echo "==> Serviços"
+install -m 644 "$ORIGEM/deploy/notepi.service" "$ORIGEM/deploy/notepi-manutencao.service" \
+  "$ORIGEM/deploy/notepi-manutencao.timer" /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable notepi.service notepi-manutencao.timer
+systemctl restart notepi.service
+systemctl start notepi-manutencao.timer
 
 echo
 echo "Pronto! Abra no celular ou no PC (com o Tailscale ligado): https://$ENDERECO"

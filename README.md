@@ -165,4 +165,5 @@ sudo cp /tmp/notas-AAAA-MM-DD.db /var/lib/notepi/notas.db
 - Versículos escritos no texto ("Jo 3:16", "Rm 12:1-2", "Sl 23") viram tags sozinhos.
 - "Jó" com acento é o livro de Jó; "Jo" sem acento é João.
 - No campo de tags, separe por vírgula. Para um versículo como tag, use hífen: `Rm 12:1-2`.
+- Uma nota aceita até cerca de 1 MB de texto (uns 900 mil caracteres com acentos); o pedido inteiro pode ter até 4 MB.
 - Exportar tudo em Markdown: página **/saude**, botão **Exportar**.

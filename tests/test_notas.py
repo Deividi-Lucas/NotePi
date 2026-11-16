@@ -94,8 +94,6 @@ def test_modelos():
 
 
 def test_editar_detecta_conflito_mesmo_apos_a_checagem(con, monkeypatch):
-    from notepi.db import agora
-
     nota_id = notas.criar(con, titulo="A", conteudo="", area="geral")
     base = notas.obter(con, nota_id)["editada_em"]
     obter_real = notas.obter
@@ -105,7 +103,7 @@ def test_editar_detecta_conflito_mesmo_apos_a_checagem(con, monkeypatch):
         linha = obter_real(con_, nota_id_, **kwargs)
         if chamadas["n"] == 0:
             # outro aparelho salva entre a checagem e o UPDATE
-            con_.execute("UPDATE notas SET editada_em = ? WHERE id = ?", (agora(), nota_id_))
+            con_.execute("UPDATE notas SET editada_em = ? WHERE id = ?", (notas._momento_depois(base), nota_id_))
         chamadas["n"] += 1
         return linha
 
@@ -123,3 +121,13 @@ def test_remove_caracteres_de_controle_stx_etx(con):
     notas.editar(con, nid, titulo="c\x03d", conteudo="p\x02q", area="geral", tags=[], editada_em_base=n["editada_em"])
     n = notas.obter(con, nid)
     assert n["titulo"] == "cd" and n["conteudo"] == "pq"
+
+
+def test_conflito_detectado_mesmo_com_relogio_empatado(con, monkeypatch):
+    nota_id = notas.criar(con, titulo="A", conteudo="", area="geral")
+    base = notas.obter(con, nota_id)["editada_em"]
+    monkeypatch.setattr(notas, "agora", lambda: base)  # relógio sem resolução: mesmo instante
+    notas.editar(con, nota_id, titulo="B", conteudo="", area="geral", tags=[], editada_em_base=base)
+    assert notas.obter(con, nota_id)["editada_em"] != base
+    with pytest.raises(notas.ConflitoEdicao):
+        notas.editar(con, nota_id, titulo="C", conteudo="", area="geral", tags=[], editada_em_base=base)

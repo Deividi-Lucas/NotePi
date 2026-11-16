@@ -339,7 +339,7 @@ def test_carregar_le_usuarios_do_ambiente(monkeypatch):
 
 
 def test_pedido_grande_demais_e_recusado(cliente):
-    r = cliente.post("/notas", data={"titulo": "x", "conteudo": "a" * 1_200_000}, follow_redirects=False)
+    r = cliente.post("/notas", data={"titulo": "x", "conteudo": "a" * 4_200_000}, follow_redirects=False)
     assert r.status_code == 413
     r = cliente.post("/notas", data={"titulo": "x", "conteudo": "a" * 100_000}, follow_redirects=False)
     assert r.status_code == 303
@@ -347,7 +347,7 @@ def test_pedido_grande_demais_e_recusado(cliente):
 
 def test_pedido_grande_sem_content_length_e_recusado(cliente):
     def corpo():
-        for _ in range(12):
+        for _ in range(42):
             yield b"conteudo=" + b"a" * 100_000
 
     r = cliente.post("/notas", content=corpo(), headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -419,3 +419,11 @@ def test_caracteres_de_controle_stx_etx_sao_removidos(cliente):
     html = cliente.get(f"/notas/{nota_id}/editar").text
     assert "\x02" not in html and "\x03" not in html
     assert "xyz" in html
+
+
+def test_nota_grande_com_acentos_enviada_como_o_rascunho_passa(cliente):
+    # rascunho.js envia multipart (FormData); 900 mil caracteres com acentos (~940 KB; o Starlette
+    # limita cada campo multipart a 1 MiB)
+    r = cliente.post("/notas", data={"titulo": "x"}, files={"conteudo": (None, ("a" * 19 + "ç ") * 45_000)},
+                     follow_redirects=False)
+    assert r.status_code == 303

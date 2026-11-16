@@ -12,7 +12,7 @@ ExecStartPost=-/bin/sh -c 'if [ -n "$NOTEPI_RCLONE_DESTINO" ]; then rclone copy 
 # Isolamento: o serviço só enxerga o que precisa
 NoNewPrivileges=yes
 ProtectSystem=strict
-ReadWritePaths=/var/lib/notepi /mnt/backup
+ReadWritePaths=/var/lib/notepi -/mnt/backup
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes

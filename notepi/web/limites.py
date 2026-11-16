@@ -5,7 +5,7 @@ from __future__ import annotations
 from starlette.responses import PlainTextResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-LIMITE_CORPO = 1_000_000  # bytes; uma nota de texto nunca chega perto disso
+LIMITE_CORPO = 4_000_000  # bytes já codificados: texto com acentos em formulário urlencoded incha ~2,7x
 
 
 class LimiteDeTamanho:
