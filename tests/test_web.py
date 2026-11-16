@@ -336,3 +336,20 @@ def test_carregar_le_usuarios_do_ambiente(monkeypatch):
     assert carregar().usuarios == ()
     monkeypatch.setenv("NOTEPI_USUARIOS", "eu@x, ela@y")
     assert carregar().usuarios == ("eu@x", "ela@y")
+
+
+def test_pedido_grande_demais_e_recusado(cliente):
+    r = cliente.post("/notas", data={"titulo": "x", "conteudo": "a" * 1_200_000}, follow_redirects=False)
+    assert r.status_code == 413
+    r = cliente.post("/notas", data={"titulo": "x", "conteudo": "a" * 100_000}, follow_redirects=False)
+    assert r.status_code == 303
+
+
+def test_pedido_grande_sem_content_length_e_recusado(cliente):
+    def corpo():
+        for _ in range(12):
+            yield b"conteudo=" + b"a" * 100_000
+
+    r = cliente.post("/notas", content=corpo(), headers={"Content-Type": "application/x-www-form-urlencoded"},
+                     follow_redirects=False)
+    assert r.status_code == 413

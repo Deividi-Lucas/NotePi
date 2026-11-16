@@ -7,7 +7,7 @@ Wants=network-online.target
 User=notepi
 Group=notepi
 EnvironmentFile=/etc/notepi.env
-ExecStart=/opt/notepi/venv/bin/uvicorn notepi.app:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+ExecStart=/opt/notepi/venv/bin/uvicorn notepi.app:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --limit-concurrency 20
 Restart=on-failure
 RestartSec=5
 

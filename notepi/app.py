@@ -12,6 +12,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from notepi.config import Config, carregar
 from notepi.web import rotas
 from notepi.web.base import ESTATICOS, templates
+from notepi.web.limites import LimiteDeTamanho
 
 log = logging.getLogger("notepi")
 
@@ -56,6 +57,7 @@ def criar_app(config: Config | None = None) -> FastAPI:
 
     # Registrado por último = mais externo: confere o Host antes de qualquer outra coisa (DNS rebinding).
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(app.state.config.hosts))
+    app.add_middleware(LimiteDeTamanho)
 
     @app.exception_handler(Exception)
     async def erro_inesperado(request: Request, exc: Exception):
