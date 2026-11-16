@@ -68,3 +68,19 @@ def test_referencia_exata():
     assert referencia_exata("Romanos 12 e algo") is None
     assert referencia_exata("hermenêutica") is None
     assert referencia_exata("Rm 12:1,3") is None  # mais de uma referência
+
+
+def test_limite_de_referencias_e_rapido():
+    import time
+
+    texto = " ".join(f"Sl {c}:{v}" for c in range(1, 151) for v in range(1, 15))
+    inicio = time.perf_counter()
+    refs = encontrar(texto)
+    assert len(refs) == 500
+    assert len({r for r in refs}) == 500
+    assert time.perf_counter() - inicio < 1
+
+
+def test_ordem_e_deduplicacao_com_limite():
+    refs = encontrar("Jo 3:16 Rm 8 Jo 3:16 Sl 23")
+    assert [r.canonica for r in refs] == ["João 3:16", "Romanos 8", "Salmos 23"]

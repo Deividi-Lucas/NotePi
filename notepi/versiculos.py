@@ -12,6 +12,9 @@ from notepi.texto import remover_acentos
 # Sem versículo ("Os 6"), elas NÃO viram referência; com versículo ("Os 6:6"), viram.
 PALAVRAS_COMUNS = frozenset({"os", "na", "ne", "et", "at", "am", "is", "ag", "ed"})
 
+# Teto de referências por texto: evita que um texto enorme trave o servidor.
+MAX_REFERENCIAS = 500
+
 
 @dataclass(frozen=True)
 class Referencia:
@@ -86,8 +89,9 @@ def _interpretar(m: re.Match[str], *, permitir_ambiguas: bool) -> list[Referenci
 
 
 def encontrar(texto: str) -> list[Referencia]:
-    """Todas as referências do texto, sem repetição, na ordem em que aparecem."""
+    """Todas as referências do texto, sem repetição, na ordem em que aparecem (até MAX_REFERENCIAS)."""
     resultado: list[Referencia] = []
+    vistas: set[Referencia] = set()
     fim_ultimo = 0
     for inicio in _INICIO_DE_PALAVRA.finditer(texto):
         if inicio.start() < fim_ultimo:
@@ -100,8 +104,11 @@ def encontrar(texto: str) -> list[Referencia]:
             continue
         fim_ultimo = m.end()
         for ref in refs:
-            if ref not in resultado:
+            if ref not in vistas:
+                vistas.add(ref)
                 resultado.append(ref)
+                if len(resultado) >= MAX_REFERENCIAS:
+                    return resultado
     return resultado
 
 
