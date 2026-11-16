@@ -63,6 +63,18 @@ tailscale status >/dev/null 2>&1 || tailscale up
 tailscale serve --bg 8000
 
 ENDERECO="$(tailscale status --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))')"
+echo "==> Hosts permitidos"
+if [ -z "$ENDERECO" ]; then
+  echo "AVISO: sem nome do Tailscale (MagicDNS desligado?). NOTEPI_HOSTS em /etc/notepi.env não foi alterado."
+elif ! grep -E '^NOTEPI_HOSTS=' /etc/notepi.env | grep -qF "$ENDERECO"; then
+  if grep -qE '^NOTEPI_HOSTS=' /etc/notepi.env; then
+    sed -i.bak -E "s|^NOTEPI_HOSTS=.*|NOTEPI_HOSTS=$ENDERECO,127.0.0.1,localhost|" /etc/notepi.env
+  else
+    echo "NOTEPI_HOSTS=$ENDERECO,127.0.0.1,localhost" >> /etc/notepi.env
+  fi
+  systemctl restart notepi.service
+fi
+
 echo
 echo "Pronto! Abra no celular ou no PC (com o Tailscale ligado): https://$ENDERECO"
 echo "Saúde do sistema: https://$ENDERECO/saude"

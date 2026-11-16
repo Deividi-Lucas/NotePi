@@ -12,7 +12,7 @@ from notepi.config import Config
 
 @pytest.fixture
 def cliente(tmp_path):
-    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "backup")
+    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "backup", hosts=("testserver",))
     with TestClient(criar_app(config), raise_server_exceptions=False) as c:
         yield c
 
@@ -75,7 +75,7 @@ def test_conflito_escapa_html(cliente):
 
 
 def test_erro_inesperado_mostra_pagina_amigavel(tmp_path, monkeypatch):
-    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "backup")
+    config = Config(db=tmp_path / "notas.db", backup_dir=tmp_path / "backup", hosts=("testserver",))
 
     def quebrar(*args, **kwargs):
         raise RuntimeError("falha simulada")
@@ -197,7 +197,7 @@ def test_busca_tag_com_digito_unicode_ignora_filtro(cliente):
 def test_saude_com_banco_corrompido_responde_503(tmp_path):
     db = tmp_path / "notas.db"
     db.write_bytes(b"isto nao e um banco" * 100)
-    config = Config(db=db, backup_dir=tmp_path / "bk")
+    config = Config(db=db, backup_dir=tmp_path / "bk", hosts=("testserver",))
     with TestClient(criar_app(config), raise_server_exceptions=False) as c:
         r = c.get("/saude")
     assert r.status_code == 503
@@ -250,7 +250,7 @@ def _saude_com_backup(tmp_path, dias=None, **cfg):
     bk.mkdir()
     if dias is not None:
         (bk / f"notas-{(date.today() - timedelta(days=dias)).isoformat()}.db").write_bytes(b"")
-    config = Config(db=tmp_path / "notas.db", backup_dir=bk, **cfg)
+    config = Config(db=tmp_path / "notas.db", backup_dir=bk, hosts=("testserver",), **cfg)
     with TestClient(criar_app(config), raise_server_exceptions=False) as c:
         return c.get("/saude")
 
@@ -291,3 +291,17 @@ def test_post_com_origin_do_proprio_host_passa(cliente):
 def test_post_com_origin_null_e_bloqueado(cliente):
     r = cliente.post("/notas", data={"titulo": "x"}, headers={"Origin": "null"}, follow_redirects=False)
     assert r.status_code == 403
+
+
+def test_host_invalido_e_recusado(cliente):
+    assert cliente.get("/", headers={"Host": "evil.example"}).status_code == 400
+    assert cliente.get("/").status_code == 200
+
+
+def test_carregar_le_hosts_do_ambiente(monkeypatch):
+    from notepi.config import carregar
+
+    monkeypatch.delenv("NOTEPI_HOSTS", raising=False)
+    assert carregar().hosts == ("127.0.0.1", "localhost")
+    monkeypatch.setenv("NOTEPI_HOSTS", "pi.tail1234.ts.net, 127.0.0.1")
+    assert carregar().hosts == ("pi.tail1234.ts.net", "127.0.0.1")

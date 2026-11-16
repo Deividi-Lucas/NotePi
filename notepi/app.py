@@ -7,6 +7,7 @@ from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from notepi.config import Config, carregar
 from notepi.web import rotas
@@ -45,6 +46,9 @@ def criar_app(config: Config | None = None) -> FastAPI:
         resposta.headers["X-Frame-Options"] = "DENY"
         resposta.headers["X-Content-Type-Options"] = "nosniff"
         return resposta
+
+    # Registrado por último = mais externo: confere o Host antes de qualquer outra coisa (DNS rebinding).
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(app.state.config.hosts))
 
     @app.exception_handler(Exception)
     async def erro_inesperado(request: Request, exc: Exception):
