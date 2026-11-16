@@ -63,22 +63,28 @@ Depois: `sudo systemctl daemon-reload` e `sudo mount -a`. Se for ext4, rode tamb
 ### 6. Cópia na nuvem (opcional, recomendado)
 No PC, instale o rclone (https://rclone.org/downloads/) e rode:
 ```powershell
-rclone authorize "drive"
+rclone authorize "drive" --drive-scope drive.file
 ```
-Ele abre o navegador para você entrar na conta Google e imprime um token. Copie esse token.
+Ele abre o navegador para você entrar na conta Google e imprime um token. Copie esse token. O escopo `drive.file`
+dá ao rclone acesso só aos arquivos que ele mesmo criar, não ao seu Drive inteiro.
 
 No Pi, crie o remote (o Pi não tem tela, por isso o token vem do PC):
 ```bash
 sudo -u notepi -H rclone config
 ```
-Crie um remote chamado `gdrive` do tipo `drive`. Quando perguntar **"Use web browser to automatically authenticate?"**,
-responda **n** e cole o token.
+Crie um remote chamado `gdrive` do tipo `drive`. Na pergunta de **scope**, escolha `drive.file`. Quando perguntar
+**"Use web browser to automatically authenticate?"**, responda **n** e cole o token.
+
+Depois crie, na mesma sessão do `rclone config`, um segundo remote chamado `cofre`, do tipo `crypt`, apontando para
+`gdrive:NotePi`. Defina uma senha forte (e a senha 2 / salt, se quiser) e **guarde-a fora do Pi**, por exemplo num
+gerenciador de senhas: sem ela os backups da nuvem não podem ser lidos. Assim, o token guardado no Pi e os arquivos
+no Drive ficam inúteis para quem não tiver a senha.
 
 Depois aponte o destino e teste:
 ```bash
-sudo nano /etc/notepi.env           # NOTEPI_RCLONE_DESTINO=gdrive:NotePi/backup
+sudo nano /etc/notepi.env           # NOTEPI_RCLONE_DESTINO=cofre:backup
 sudo systemctl start notepi-manutencao.service   # testa agora
-sudo -u notepi -H rclone ls gdrive:NotePi/backup # deve listar notas-AAAA-MM-DD.db de hoje
+sudo -u notepi -H rclone ls cofre:backup         # deve listar notas-AAAA-MM-DD.db de hoje
 ```
 Se não aparecer nada, veja `journalctl -u notepi-manutencao -n 30`.
 
@@ -131,7 +137,7 @@ sudo systemctl start notepi
 ```
 Se o pendrive for perdido, baixe o backup da nuvem antes e use o arquivo baixado no lugar de `/mnt/backup/...`:
 ```bash
-sudo -u notepi -H rclone copy gdrive:NotePi/backup/notas-AAAA-MM-DD.db /tmp/
+sudo -u notepi -H rclone copy cofre:backup/notas-AAAA-MM-DD.db /tmp/
 sudo cp /tmp/notas-AAAA-MM-DD.db /var/lib/notepi/notas.db
 ```
 
