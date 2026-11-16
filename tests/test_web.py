@@ -272,3 +272,22 @@ def test_saude_sem_backup_avisa(tmp_path):
 def test_saude_pendrive_ausente_avisa(tmp_path):
     r = _saude_com_backup(tmp_path, 0, backup_exigir_montagem=True)
     assert "não está montado" in r.text
+
+
+def test_post_com_origin_de_outro_site_sem_sec_fetch_e_bloqueado(cliente):
+    r = cliente.post("/notas", data={"titulo": "x"}, headers={"Origin": "https://evil.example"},
+                     follow_redirects=False)
+    assert r.status_code == 403
+    assert "Pedido bloqueado" in r.text
+    assert "Nenhuma nota" in cliente.get("/").text
+
+
+def test_post_com_origin_do_proprio_host_passa(cliente):
+    r = cliente.post("/notas", data={"titulo": "x"}, headers={"Origin": "http://testserver"},
+                     follow_redirects=False)
+    assert r.status_code == 303
+
+
+def test_post_com_origin_null_e_bloqueado(cliente):
+    r = cliente.post("/notas", data={"titulo": "x"}, headers={"Origin": "null"}, follow_redirects=False)
+    assert r.status_code == 403
