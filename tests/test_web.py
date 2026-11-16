@@ -392,3 +392,30 @@ def test_htmx_configurado_de_forma_restrita(cliente):
     html = cliente.get("/").text
     assert 'name="htmx-config"' in html
     assert '"allowEval":false' in html
+
+
+def test_rotas_inexistentes_e_ids_invalidos_dao_404_amigavel(cliente):
+    for caminho in ("/notas/abc", "/qualquer-coisa", "/notas/0", "/notas/99999999999999999999",
+                    "/tags/99999999999999999999", "/notas/99999999999999999999/editar"):
+        r = cliente.get(caminho)
+        assert r.status_code == 404, caminho
+        assert "text/html" in r.headers["content-type"] and "Ops" in r.text, caminho
+
+
+def test_metodo_nao_permitido_e_pagina_amigavel(cliente):
+    r = cliente.post("/")
+    assert r.status_code == 405 and "Ops" in r.text
+
+
+def test_busca_com_tag_gigante_ignora_o_filtro(cliente):
+    r = cliente.get("/busca", params={"q": "x", "tag": "99999999999999999999"})
+    assert r.status_code == 200
+    r = cliente.get("/busca", params={"q": "x", "tag": "9" * 5000})
+    assert r.status_code == 200
+
+
+def test_caracteres_de_controle_stx_etx_sao_removidos(cliente):
+    nota_id = _criar(cliente, titulo="a\x02b", conteudo="x\x02y\x03z")
+    html = cliente.get(f"/notas/{nota_id}/editar").text
+    assert "\x02" not in html and "\x03" not in html
+    assert "xyz" in html

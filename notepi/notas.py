@@ -21,6 +21,10 @@ AREAS = {
 _RESUMO = "id, titulo, area, modelo, editada_em, excluida_em, substr(conteudo, 1, 160) AS inicio"
 
 
+#  e  quebram a busca (FTS5) e não têm uso em texto de nota.
+_CONTROLE = str.maketrans("", "", "")
+
+
 class NotaNaoEncontrada(LookupError):
     pass
 
@@ -61,6 +65,7 @@ def criar(
     tags: list[str] | tuple[str, ...] = (),
 ) -> int:
     _validar(area, modelo)
+    titulo, conteudo = titulo.translate(_CONTROLE), conteudo.translate(_CONTROLE)
     momento = agora()
     titulo_final = titulo_efetivo(titulo, conteudo)
     with con:
@@ -93,6 +98,7 @@ def editar(
     editada_em_base: str,
 ) -> None:
     """Salva a edição. `editada_em_base` é o editada_em que o formulário carregou."""
+    titulo, conteudo = titulo.translate(_CONTROLE), conteudo.translate(_CONTROLE)
     with con:
         atual = obter(con, nota_id)
         if atual is None:

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request
+from fastapi import Path as CaminhoUrl
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from notepi import backup, busca, livros, modelos, notas, versiculos
@@ -30,6 +31,8 @@ def obter_con(request: Request):
 
 Con = Annotated[sqlite3.Connection, Depends(obter_con)]
 Campo = Annotated[str, Form()]
+MAX_ID = 2**63 - 1  # maior inteiro do SQLite
+IdBanco = Annotated[int, CaminhoUrl(ge=1, le=MAX_ID)]
 
 
 def _pagina(request: Request, nome: str, contexto: dict | None = None, status: int = 200):
@@ -101,7 +104,7 @@ def criar(request: Request, con: Con, titulo: Campo = "", conteudo: Campo = "", 
 
 
 @router.get("/notas/{nota_id}")
-def ver(request: Request, con: Con, nota_id: int):
+def ver(request: Request, con: Con, nota_id: IdBanco):
     nota = notas.obter(con, nota_id)
     if nota is None:
         return _nao_encontrada(request)
@@ -113,7 +116,7 @@ def ver(request: Request, con: Con, nota_id: int):
 
 
 @router.get("/notas/{nota_id}/editar")
-def editar_form(request: Request, con: Con, nota_id: int):
+def editar_form(request: Request, con: Con, nota_id: IdBanco):
     nota = notas.obter(con, nota_id)
     if nota is None:
         return _nao_encontrada(request)
@@ -131,7 +134,7 @@ def editar_form(request: Request, con: Con, nota_id: int):
 
 
 @router.post("/notas/{nota_id}")
-def salvar(request: Request, con: Con, nota_id: int, titulo: Campo = "", conteudo: Campo = "",
+def salvar(request: Request, con: Con, nota_id: IdBanco, titulo: Campo = "", conteudo: Campo = "",
            area: Campo = "geral", tags: Campo = "", editada_em_base: Campo = ""):
     area = _area_ou(area, "geral")
     try:
@@ -156,7 +159,7 @@ def salvar(request: Request, con: Con, nota_id: int, titulo: Campo = "", conteud
 
 
 @router.post("/notas/{nota_id}/excluir")
-def excluir(request: Request, con: Con, nota_id: int):
+def excluir(request: Request, con: Con, nota_id: IdBanco):
     try:
         notas.excluir(con, nota_id)
     except notas.NotaNaoEncontrada:
@@ -165,7 +168,7 @@ def excluir(request: Request, con: Con, nota_id: int):
 
 
 @router.post("/notas/{nota_id}/restaurar")
-def restaurar(request: Request, con: Con, nota_id: int):
+def restaurar(request: Request, con: Con, nota_id: IdBanco):
     try:
         notas.restaurar(con, nota_id)
     except notas.NotaNaoEncontrada:
@@ -181,7 +184,8 @@ def pagina_busca(request: Request, con: Con, q: str = "", area: str | None = Non
                  modelo: str | None = None, tag: str | None = None):
     area = area if area in notas.AREAS else None
     modelo = modelo if modelo in modelos.NOMES else None
-    tag_obj = tags_mod.obter(con, int(tag)) if tag and tag.isascii() and tag.isdigit() else None
+    tag_id = int(tag) if tag and tag.isascii() and tag.isdigit() and len(tag) <= 19 else None
+    tag_obj = tags_mod.obter(con, tag_id) if tag_id is not None and tag_id <= MAX_ID else None
     filtrando = bool(q.strip() or area or modelo or tag_obj)
     resultados = (
         busca.buscar(con, q, area=area, modelo=modelo, tag_id=tag_obj["id"] if tag_obj else None)
@@ -205,7 +209,7 @@ def pagina_tags(request: Request, con: Con):
 
 
 @router.get("/tags/{tag_id}")
-def pagina_tag(request: Request, con: Con, tag_id: int):
+def pagina_tag(request: Request, con: Con, tag_id: IdBanco):
     tag = tags_mod.obter(con, tag_id)
     if tag is None:
         return _pagina(request, "erro.html", {"mensagem": "Tag não encontrada."}, 404)

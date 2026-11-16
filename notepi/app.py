@@ -6,7 +6,9 @@ import logging
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from notepi.config import Config, carregar
@@ -70,6 +72,23 @@ def criar_app(config: Config | None = None) -> FastAPI:
     # Registrado por último = mais externo: confere o Host antes de qualquer outra coisa (DNS rebinding).
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(app.state.config.hosts))
     app.add_middleware(LimiteDeTamanho)
+
+    @app.exception_handler(StarletteHTTPException)
+    async def erro_http(request: Request, exc: StarletteHTTPException):
+        mensagem = "Página não encontrada." if exc.status_code == 404 else "Não foi possível atender este pedido."
+        return templates.TemplateResponse(
+            request, "erro.html", {"mensagem": mensagem}, status_code=exc.status_code,
+            headers=getattr(exc, "headers", None),
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def erro_de_validacao(request: Request, exc: RequestValidationError):
+        # id inválido na URL (texto, zero, gigante) = página que não existe
+        na_url = any(e["loc"] and e["loc"][0] == "path" for e in exc.errors())
+        mensagem = "Página não encontrada." if na_url else "Pedido inválido."
+        return templates.TemplateResponse(
+            request, "erro.html", {"mensagem": mensagem}, status_code=404 if na_url else 422
+        )
 
     @app.exception_handler(Exception)
     async def erro_inesperado(request: Request, exc: Exception):

@@ -114,3 +114,12 @@ def test_editar_detecta_conflito_mesmo_apos_a_checagem(con, monkeypatch):
         notas.editar(con, nota_id, titulo="PC", conteudo="", area="geral", tags=[], editada_em_base=base)
     monkeypatch.setattr(notas, "obter", obter_real)
     assert notas.obter(con, nota_id)["titulo"] == "A"
+
+
+def test_remove_caracteres_de_controle_stx_etx(con):
+    nid = notas.criar(con, titulo="a\x02b", conteudo="x\x02y\x03z", area="geral")
+    n = notas.obter(con, nid)
+    assert n["titulo"] == "ab" and n["conteudo"] == "xyz"
+    notas.editar(con, nid, titulo="c\x03d", conteudo="p\x02q", area="geral", tags=[], editada_em_base=n["editada_em"])
+    n = notas.obter(con, nid)
+    assert n["titulo"] == "cd" and n["conteudo"] == "pq"
