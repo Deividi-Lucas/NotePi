@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}NotePi{% endblock %}</title>
-  <link rel="stylesheet" href="/static/estilo.css">
+  <link rel="stylesheet" href="/static/estilo.css?v={{ VERSAO_CSS }}">
   <meta name="htmx-config" content='{"selfRequestsOnly":true,"allowEval":false,"allowScriptTags":false,"includeIndicatorStyles":false}'>
   <script src="/static/htmx.min.js" defer></script>
   <script src="/static/confirmar.js" defer></script>
@@ -13,9 +13,10 @@
   <header class="topo">
     <a href="/" class="marca">NotePi</a>
     <nav>
-      <a href="/busca">Buscar</a>
-      <a href="/tags">Tags</a>
-      <a href="/lixeira">Lixeira</a>
+      {% set caminho = request.url.path %}
+      <a href="/busca" {% if caminho.startswith("/busca") %}aria-current="page"{% endif %}>Buscar</a>
+      <a href="/tags" {% if caminho.startswith("/tags") %}aria-current="page"{% endif %}>Tags</a>
+      <a href="/lixeira" {% if caminho.startswith("/lixeira") %}aria-current="page"{% endif %}>Lixeira</a>
     </nav>
   </header>
   <main>

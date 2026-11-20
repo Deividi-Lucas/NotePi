@@ -22,9 +22,9 @@
   </form>
 </div>
 
+{% if relacionadas %}
 <section>
   <h2>Notas relacionadas</h2>
-  {% if relacionadas %}
   <ul class="lista">
     {% for n in relacionadas %}
     <li>
@@ -35,8 +35,6 @@
     </li>
     {% endfor %}
   </ul>
-  {% else %}
-  <p class="vazio">Nenhuma outra nota com tags em comum ainda.</p>
-  {% endif %}
 </section>
+{% endif %}
 {% endblock %}

@@ -1,28 +1,33 @@
 :root {
-  --fundo: #fafaf7;
+  /* Direção: caderno de estudo com a fita marcadora da Bíblia. Papel neutro (não creme),
+     tinta grafite e uma única cor de destaque: o vinho da fita. */
+  --fundo: #f2f3f4;
   --superficie: #ffffff;
-  --texto: #1f2328;
-  --suave: #656d76;
-  --borda: #d8dee4;
-  --destaque: #2f6f4f;
+  --texto: #1c1e22;
+  --suave: #5c616b;
+  --borda: #d3d6db;
+  --destaque: #7d2335;
   --destaque-texto: #ffffff;
-  --versiculo: #f3ead7;
-  --perigo: #b42318;
-  --marca: #fff3a3;
+  --versiculo: #f5e8eb;
+  --versiculo-borda: #e2c3ca;
+  --perigo: #c2410c;
+  --marca: #fde68a;
+  --raio: 4px;
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --fundo: #15171a;
-    --superficie: #1d2024;
-    --texto: #e6e6e3;
-    --suave: #9aa3ad;
-    --borda: #33383e;
-    --destaque: #58a37c;
-    --destaque-texto: #0d1f16;
-    --versiculo: #3a3220;
-    --perigo: #f07167;
-    --marca: #5c5000;
+    --fundo: #131417;
+    --superficie: #1b1d21;
+    --texto: #e5e6e8;
+    --suave: #9a9fa8;
+    --borda: #30333a;
+    --destaque: #e3899a;
+    --destaque-texto: #2a0b12;
+    --versiculo: #36202a;
+    --versiculo-borda: #553442;
+    --perigo: #fb923c;
+    --marca: #5c4a00;
   }
 }
 
@@ -37,6 +42,7 @@ main { max-width: 760px; margin: 0 auto; padding: 16px; }
 a { color: var(--destaque); }
 h1 { font-size: 1.5rem; margin: .5rem 0 1rem; }
 h2 { font-size: 1.15rem; margin-top: 2rem; }
+h3 { font-size: 1rem; margin: 1.2rem 0 .4rem; color: var(--suave); }
 
 .topo {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -45,11 +51,18 @@ h2 { font-size: 1.15rem; margin-top: 2rem; }
 }
 .topo nav { display: flex; gap: 14px; }
 .topo a { text-decoration: none; }
-.marca { font-weight: 700; color: var(--texto); }
+.marca { font-weight: 700; color: var(--texto); display: inline-flex; align-items: center; gap: 8px; letter-spacing: .01em; }
+/* A fita marcadora: o único ornamento do app. */
+.marca::before {
+  content: ""; width: 8px; height: 18px; background: var(--destaque);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%);
+}
+.topo nav a { color: var(--suave); }
+.topo nav a:hover, .topo nav a[aria-current="page"] { color: var(--texto); }
 
 input, select, textarea, button { font: inherit; color: inherit; }
 input, select, textarea {
-  width: 100%; padding: 10px 12px; border: 1px solid var(--borda); border-radius: 8px;
+  width: 100%; padding: 10px 12px; border: 1px solid var(--borda); border-radius: var(--raio);
   background: var(--superficie);
 }
 textarea { min-height: 45vh; resize: vertical; font-family: ui-monospace, Consolas, monospace; font-size: 16px; }
@@ -61,7 +74,7 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 .busca .linha select { flex: 1 1 140px; width: auto; }
 
 .botao {
-  display: inline-block; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--borda);
+  display: inline-block; padding: 10px 16px; border-radius: var(--raio); border: 1px solid var(--borda);
   background: var(--superficie); text-decoration: none; color: var(--texto); cursor: pointer;
 }
 .botao.principal { background: var(--destaque); border-color: var(--destaque); color: var(--destaque-texto); font-weight: 600; }
@@ -69,12 +82,17 @@ label > input, label > select, label > textarea { margin-top: 4px; font-weight: 
 .acoes { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .acoes form { margin: 0; }
 
-.filtros { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 8px; }
+.filtros {
+  display: flex; gap: 18px; overflow-x: auto; margin: 4px 0 4px; border-bottom: 1px solid var(--borda);
+  scrollbar-width: none;
+}
+.filtros::-webkit-scrollbar { display: none; }
 .filtros a {
-  white-space: nowrap; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--borda);
+  white-space: nowrap; padding: 8px 0 7px; border-bottom: 2px solid transparent; margin-bottom: -1px;
   text-decoration: none; color: var(--suave);
 }
-.filtros a.ativo { background: var(--destaque); color: var(--destaque-texto); border-color: var(--destaque); }
+.filtros a:hover { color: var(--texto); }
+.filtros a.ativo { color: var(--texto); border-bottom-color: var(--destaque); font-weight: 600; }
 
 .lista { list-style: none; padding: 0; margin: 0; }
 .lista li { border-bottom: 1px solid var(--borda); }
@@ -87,16 +105,17 @@ mark { background: var(--marca); color: inherit; padding: 0 2px; border-radius: 
 
 .chips { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .chip {
-  display: inline-block; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--borda);
+  display: inline-block; padding: 2px 8px; border-radius: var(--raio); border: 1px solid var(--borda);
   text-decoration: none; color: var(--texto); font-size: .9rem;
 }
-.chip.versiculo { background: var(--versiculo); }
+.chip.versiculo { background: var(--versiculo); border-color: var(--versiculo-borda); }
+.chip small { color: var(--suave); }
 
-.aviso { padding: 10px 12px; border-left: 4px solid var(--destaque); background: var(--superficie); }
+.aviso { padding: 10px 12px; border-radius: 0 var(--raio) var(--raio) 0; border-left: 4px solid var(--destaque); background: var(--superficie); }
 .aviso.erro { border-left-color: var(--perigo); }
 .previa { margin: -6px 0 14px; }
 
 .markdown table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
 .markdown th, .markdown td { border: 1px solid var(--borda); padding: 6px 8px; text-align: left; }
 .markdown pre { overflow-x: auto; }
-details { margin: 12px 0; padding: 8px 12px; border: 1px solid var(--borda); border-radius: 8px; }
+details { margin: 12px 0; padding: 8px 12px; border: 1px solid var(--borda); border-radius: var(--raio); }

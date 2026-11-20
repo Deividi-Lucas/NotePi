@@ -399,12 +399,12 @@ def test_rotas_inexistentes_e_ids_invalidos_dao_404_amigavel(cliente):
                     "/tags/99999999999999999999", "/notas/99999999999999999999/editar"):
         r = cliente.get(caminho)
         assert r.status_code == 404, caminho
-        assert "text/html" in r.headers["content-type"] and "Ops" in r.text, caminho
+        assert "text/html" in r.headers["content-type"] and "Não foi possível abrir" in r.text, caminho
 
 
 def test_metodo_nao_permitido_e_pagina_amigavel(cliente):
     r = cliente.post("/")
-    assert r.status_code == 405 and "Ops" in r.text
+    assert r.status_code == 405 and "Não foi possível abrir" in r.text
 
 
 def test_busca_com_tag_gigante_ignora_o_filtro(cliente):
@@ -450,3 +450,10 @@ def test_carregar_le_backup_marcador(monkeypatch):
     assert carregar().backup_marcador is True
     monkeypatch.delenv("NOTEPI_BACKUP_MARCADOR")
     assert carregar().backup_marcador is False
+
+
+def test_markdown_respeita_quebra_de_linha_simples():
+    from notepi.web.base import renderizar_markdown
+
+    html = renderizar_markdown("**Data:** 11/11\n**Pregador:** Fulano")
+    assert "<br" in html

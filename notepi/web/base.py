@@ -18,7 +18,8 @@ ESTATICOS = _PASTA / "static"
 templates = Jinja2Templates(directory=_PASTA / "templates")
 
 # html=False: qualquer HTML digitado na nota aparece como texto, nunca é executado.
-_md = MarkdownIt("commonmark", {"html": False}).enable("table").enable("strikethrough")
+# breaks=True: uma quebra de linha simples vira quebra de verdade (como se escreve no celular).
+_md = MarkdownIt("commonmark", {"html": False, "breaks": True}).enable("table").enable("strikethrough")
 
 
 def renderizar_markdown(texto: str) -> Markup:
@@ -36,3 +37,5 @@ templates.env.filters["markdown"] = renderizar_markdown
 templates.env.filters["data_br"] = data_br
 templates.env.globals["AREAS"] = AREAS
 templates.env.globals["MODELOS"] = MODELOS
+# Muda quando o CSS muda, para o celular não continuar com a versão antiga em cache.
+templates.env.globals["VERSAO_CSS"] = int((ESTATICOS / "estilo.css").stat().st_mtime)
